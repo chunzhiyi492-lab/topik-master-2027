@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SelfTest from './pages/SelfTest'
 import Vocab from './pages/Vocab'
+import Review from './pages/Review'
 import MetalPrototype from './pages/MetalPrototype'
 import CloverDreamcore from './pages/CloverDreamcore'
 
@@ -12,6 +13,7 @@ import CloverDreamcore from './pages/CloverDreamcore'
 // 加 ?clover=1 可直接打开原型。两个原型入口共存，互不影响。
 function App() {
   const [showVocab, setShowVocab] = useState(false)
+  const [showReview, setShowReview] = useState(false)
   const [showMetal, setShowMetal] = useState(
     () => new URLSearchParams(window.location.search).get('metal') === '1',
   )
@@ -21,6 +23,10 @@ function App() {
 
   if (showVocab) {
     return <Vocab onBack={() => setShowVocab(false)} />
+  }
+
+  if (showReview) {
+    return <Review onBack={() => setShowReview(false)} />
   }
 
   if (showMetal) {
@@ -40,13 +46,17 @@ function App() {
         发音用浏览器自带韩语语音，复习用 FSRS 算法。
       </p>
       <div className="note">
-        当前版本：P1 词汇地基。词汇导入、搜索筛选、每日背词计划已开发；复习、统计功能尚未开发。
+        当前版本：P2 复习核心。词汇导入、搜索筛选、每日背词计划、FSRS 复习、随机抽词、
+        掌握度标记、收藏与错词本已开发；统计功能尚未开发。
         词汇分级规则：不标“官方 TOPIK X 级”，只用 NIKL-A/B/C、TOPIK-초급/중급、课程-X级参考三类来源标注。
         全部种子只进待核实池；无中文释义的词显示“待补”，不编造。
       </div>
       <p>
         <button type="button" onClick={() => setShowVocab(true)}>
           词汇
+        </button>{' '}
+        <button type="button" onClick={() => setShowReview(true)}>
+          复习
         </button>{' '}
         <button type="button" onClick={() => setShowMetal(true)}>
           金属风原型（预览）
