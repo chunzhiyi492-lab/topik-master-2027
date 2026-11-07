@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import type { GradeLabel } from './srs'
 
 // TOPIK MASTER 2027 — 数据层（T0）
 // 本地优先：全部数据只存在浏览器 IndexedDB，不上传任何第三方。
@@ -150,6 +151,73 @@ export async function getFilterOptions(): Promise<{
 /** 切换一条词的收藏状态。 */
 export async function toggleFavorite(id: number, favorite: boolean): Promise<void> {
   await db.vocab.update(id, { favorite })
+}
+
+// ---- P2 新增查询函数（只加函数，不动表结构、不升 Dexie 版本）----
+
+/** 全部复习记录（按 id 升序）。 */
+export async function getAllReviews(): Promise<ReviewRecord[]> {
+  return db.reviews.toArray()
+}
+
+/** 某条词的最新一条复习记录（按 reviewedAt、再按 id 取最大）；没复习过返回 undefined。 */
+export async function getLatestReviewByVocab(vocabId: number): Promise<ReviewRecord | undefined> {
+  const all = await db.reviews.where('vocabId').equals(vocabId).toArray()
+  if (all.length === 0) return undefined
+  return all.reduce((a, b) =>
+    b.reviewedAt.getTime() > a.reviewedAt.getTime() ||
+    (b.reviewedAt.getTime() === a.reviewedAt.getTime() && (b.id ?? 0) > (a.id ?? 0))
+      ? b
+      : a,
+  )
+}
+
+/** 每条词的最新打分档位（vocabId → { grade, reviewedAt }）；没复习过的词不在 map 里。 */
+export async function getLatestGradeMap(): Promise<
+  Map<number, { grade: string; reviewedAt: Date }>
+> {
+  const all = await db.reviews.toArray()
+  const map = new Map<number, { grade: string; reviewedAt: Date }>()
+  for (const r of all) {
+    const cur = map.get(r.vocabId)
+    if (
+      !cur ||
+      r.reviewedAt.getTime() > cur.reviewedAt.getTime()
+    ) {
+      map.set(r.vocabId, { grade: r.grade, reviewedAt: r.reviewedAt })
+    }
+  }
+  return map
+}
+
+/** 错词本：最新一次打分是“不认识”或“模糊”的词（按最新复习时间倒序）。 */
+export async function getWrongVocab(): Promise<
+  { vocab: VocabEntry; grade: string; reviewedAt: Date }[]
+> {
+  const gradeMap = await getLatestGradeMap()
+  const wrongIds = [...gradeMap.entries()]
+    .filter(([, g]) => g.grade === '不认识' || g.grade === '模糊')
+    .sort((a, b) => b[1].reviewedAt.getTime() - a[1].reviewedAt.getTime())
+  const out: { vocab: VocabEntry; grade: string; reviewedAt: Date }[] = []
+  for (const [vocabId, g] of wrongIds) {
+    const vocab = await db.vocab.get(vocabId)
+    if (vocab) out.push({ vocab, grade: g.grade, reviewedAt: g.reviewedAt })
+  }
+  return out
+}
+
+/** 按掌握度筛选：最新一次打分等于指定档位的词（没复习过的词不算任何档位）。 */
+export async function getVocabByMastery(grade: GradeLabel): Promise<VocabEntry[]> {
+  const gradeMap = await getLatestGradeMap()
+  const ids = [...gradeMap.entries()]
+    .filter(([, g]) => g.grade === grade)
+    .map(([vocabId]) => vocabId)
+  const out: VocabEntry[] = []
+  for (const id of ids) {
+    const vocab = await db.vocab.get(id)
+    if (vocab) out.push(vocab)
+  }
+  return out.sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
 }
 
 export async function addReview(rec: Omit<ReviewRecord, 'id'>): Promise<number> {
