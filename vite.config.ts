@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 // TOPIK MASTER 2027 — T0
 // 静态 PWA，无后端。vite-plugin-pwa 生成 Service Worker，离线可打开首页。
 export default defineConfig({
+  // GitHub Pages 部署在子路径 /topik-master-2027/ 下，base 必须对应，否则资源 404。
+  base: '/topik-master-2027/',
   plugins: [
     react(),
     VitePWA({
