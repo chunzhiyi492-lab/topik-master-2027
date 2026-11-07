@@ -1,18 +1,28 @@
 import { useState } from 'react'
 import SelfTest from './pages/SelfTest'
 import MetalPrototype from './pages/MetalPrototype'
+import JournalDreamcore from './pages/JournalDreamcore'
 
 // TOPIK MASTER 2027 — T0 首页
 // 只有项目说明 + 自测入口。词汇浏览、复习页是 T1 及以后任务，T0 不做。
 // 冷金属风原型入口（prototype/metal-design 分支）：仅切换显示原型页，不引入路由库；
 // 加 ?metal=1 可直接打开原型，方便截图验收。
+// 手账·梦核四叶草原型入口（prototype/journal-dreamcore 分支）：同理，
+// 加 ?journal-dream=1 可直接打开原型。两个原型入口共存，互不影响。
 function App() {
   const [showMetal, setShowMetal] = useState(
     () => new URLSearchParams(window.location.search).get('metal') === '1',
   )
+  const [showDream, setShowDream] = useState(
+    () => new URLSearchParams(window.location.search).get('journal-dream') === '1',
+  )
 
   if (showMetal) {
     return <MetalPrototype onBack={() => setShowMetal(false)} />
+  }
+
+  if (showDream) {
+    return <JournalDreamcore onBack={() => setShowDream(false)} />
   }
 
   return (
@@ -30,6 +40,9 @@ function App() {
       <p>
         <button type="button" onClick={() => setShowMetal(true)}>
           金属风原型（预览）
+        </button>{' '}
+        <button type="button" onClick={() => setShowDream(true)}>
+          手账·梦核四叶草原型（预览）
         </button>
       </p>
       <SelfTest />
