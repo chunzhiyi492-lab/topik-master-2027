@@ -97,6 +97,61 @@ export async function searchVocab(keyword: string): Promise<VocabEntry[]> {
     .toArray()
 }
 
+// ---- P1 新增查询函数（只加函数，不动表结构、不升 Dexie 版本）----
+
+/** 库内词条总数。 */
+export async function countVocab(): Promise<number> {
+  return db.vocab.count()
+}
+
+/** 待核实池按来源分组的条数（source → count）。 */
+export async function countPendingBySource(): Promise<{ source: string; count: number }[]> {
+  const pending = await db.vocab.where('status').equals('待核实').toArray()
+  const map = new Map<string, number>()
+  for (const v of pending) {
+    map.set(v.source, (map.get(v.source) ?? 0) + 1)
+  }
+  return [...map.entries()]
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+/** 待核实池全部条目，可按来源过滤（不传则全部）。 */
+export async function getPendingVocab(source?: string): Promise<VocabEntry[]> {
+  const all = await db.vocab.where('status').equals('待核实').toArray()
+  return source ? all.filter((v) => v.source === source) : all
+}
+
+/** 未学新词：没有任何复习记录的词条，按 id 升序取前 limit 条（今日新词列表用）。 */
+export async function getUnlearnedVocab(limit: number): Promise<VocabEntry[]> {
+  const reviewedIds = new Set((await db.reviews.toArray()).map((r) => r.vocabId))
+  return db.vocab
+    .filter((v) => v.id !== undefined && !reviewedIds.has(v.id))
+    .limit(limit)
+    .toArray()
+}
+
+/** 筛选下拉的可选值：延世课次 / 来源分级 / 词性（去重、排序，空值除外）。 */
+export async function getFilterOptions(): Promise<{
+  lessons: string[]
+  levels: string[]
+  poses: string[]
+}> {
+  const all = await db.vocab.toArray()
+  const pick = (fn: (v: VocabEntry) => string) =>
+    [...new Set(all.map(fn).filter((x) => x !== ''))].sort()
+  return {
+    lessons: pick((v) => v.yonsei_lesson),
+    levels: pick((v) => v.source_level),
+    poses: pick((v) => v.pos),
+  }
+}
+
+/** 切换一条词的收藏状态。 */
+export async function toggleFavorite(id: number, favorite: boolean): Promise<void> {
+  await db.vocab.update(id, { favorite })
+}
+
 export async function addReview(rec: Omit<ReviewRecord, 'id'>): Promise<number> {
   return db.reviews.add(rec)
 }
