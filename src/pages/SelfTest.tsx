@@ -142,18 +142,20 @@ export default function SelfTest() {
       items.push({ name: 'Service Worker 已注册', status: 'FAIL', detail: `异常：${err instanceof Error ? err.message : String(err)}` })
     }
 
-    // 6. manifest 存在
+    // 6. manifest 存在（必须带 base 子路径取，根路径 /manifest.webmanifest 在
+    //    GitHub Pages 子路径部署下是 404；BASE_URL 构建时为 /topik-master-2027/）
+    const manifestUrl = `${import.meta.env.BASE_URL}manifest.webmanifest`
     try {
-      const res = await fetch('/manifest.webmanifest')
+      const res = await fetch(manifestUrl)
       if (res.ok) {
         const manifest = (await res.json()) as { name?: string }
         items.push({
           name: 'manifest 存在',
           status: 'PASS',
-          detail: `GET /manifest.webmanifest 返回 ${res.status}，name：${manifest.name ?? '未知'}。`,
+          detail: `GET ${manifestUrl} 返回 ${res.status}，name：${manifest.name ?? '未知'}。`,
         })
       } else {
-        items.push({ name: 'manifest 存在', status: 'FAIL', detail: `GET /manifest.webmanifest 返回 ${res.status}。` })
+        items.push({ name: 'manifest 存在', status: 'FAIL', detail: `GET ${manifestUrl} 返回 ${res.status}。` })
       }
     } catch (err) {
       items.push({ name: 'manifest 存在', status: 'FAIL', detail: `异常：${err instanceof Error ? err.message : String(err)}` })
