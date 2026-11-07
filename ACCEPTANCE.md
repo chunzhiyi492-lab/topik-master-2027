@@ -76,9 +76,9 @@
 ### 改动文件
 - 新增 `src/lib/review.ts`（到期列表、今日复习统计、连续天数——周日不算断签、错词本、收藏复习、随机抽词，全部纯函数 + IndexedDB 查询）
 - 新增 `src/pages/Review.tsx`（到期复习 / 错词复练 / 收藏复习三队列、复习卡片、四档打分 + FSRS 预览、随机抽词、错词本、收藏、掌握度筛选）
-- `src/lib/db.ts`：只新增 3 个查询函数 `getWrongVocabIds` / `getFavoriteVocabIds` / `getVocabByMastery`，表结构与 Dexie 版本未动
+- `src/lib/db.ts`：只新增 5 个查询函数 `getAllReviews` / `getLatestReviewByVocab` / `getLatestGradeMap` / `getWrongVocab` / `getVocabByMastery`，表结构与 Dexie 版本未动
 - `src/App.tsx`：只加首页“复习”按钮 + Review 页入口；词汇、金属风、四叶草三个入口保留，手账入口未加回
-- `scripts/test-streak.mjs`：连续天数规则单测（10 个用例，开发时用；不进仓库流程）
+- `scripts/test-streak.mjs`：连续天数规则单测（10 个用例；已随提交入库，可直接 `node scripts/test-streak.mjs` 运行，但未接进 package.json 的 npm scripts）
 
 ### 构建与测试（worktree 内实测）
 - `npm run build`：通过。`dist/index.html` 741.34 KiB；precache 20 个条目。
