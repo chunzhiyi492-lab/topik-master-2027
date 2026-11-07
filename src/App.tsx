@@ -1,8 +1,20 @@
+import { useState } from 'react'
 import SelfTest from './pages/SelfTest'
+import MetalPrototype from './pages/MetalPrototype'
 
 // TOPIK MASTER 2027 — T0 首页
 // 只有项目说明 + 自测入口。词汇浏览、复习页是 T1 及以后任务，T0 不做。
+// 冷金属风原型入口（prototype/metal-design 分支）：仅切换显示原型页，不引入路由库；
+// 加 ?metal=1 可直接打开原型，方便截图验收。
 function App() {
+  const [showMetal, setShowMetal] = useState(
+    () => new URLSearchParams(window.location.search).get('metal') === '1',
+  )
+
+  if (showMetal) {
+    return <MetalPrototype onBack={() => setShowMetal(false)} />
+  }
+
   return (
     <>
       <h1>TOPIK MASTER 2027</h1>
@@ -15,6 +27,11 @@ function App() {
         当前版本：T0 项目初始化与技术架构验证。词汇、复习、统计功能尚未开发。
         词汇分级规则：不标“官方 TOPIK X 级”，只用 NIKL-A/B/C、TOPIK-초급/중급、课程-X级参考三类来源标注。
       </div>
+      <p>
+        <button type="button" onClick={() => setShowMetal(true)}>
+          金属风原型（预览）
+        </button>
+      </p>
       <SelfTest />
     </>
   )
