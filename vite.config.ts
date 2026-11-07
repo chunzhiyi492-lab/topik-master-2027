@@ -17,13 +17,15 @@ export default defineConfig({
         short_name: 'TOPIK 2027',
         description: '个人韩语 TOPIK 备考系统（本地优先）',
         lang: 'zh-CN',
-        start_url: '/',
+        // 注意：部署在子路径 /topik-master-2027/ 下，start_url 与图标必须带子路径，
+        // 写根路径 '/' 会在 Pages 上 404，“添加到主屏幕”拿不到图标。
+        start_url: '/topik-master-2027/',
         display: 'standalone',
         background_color: '#fff7f0',
         theme_color: '#d7929f',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/topik-master-2027/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/topik-master-2027/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {
