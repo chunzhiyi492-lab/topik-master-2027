@@ -188,5 +188,10 @@ export async function seedTestData(): Promise<number[]> {
 }
 
 export async function deleteTestData(): Promise<void> {
-  await db.vocab.where('isTestData').equals(1).delete()
+  // 注意：vocab 表没有给 isTestData 建索引（建索引要升 Dexie 版本做迁移），
+  // 所以不能用 where('isTestData')，改用 filter 全表筛出测试数据再删。
+  // 之前用 where('isTestData') 会抛 "KeyPath isTestData ... is not indexed"，
+  // 删失败后 seedTestData 的 add() 又因键已存在抛 "Key already exists"，
+  // 两次真机自测的 IndexedDB FAIL 都是这么来的，库本身没坏。
+  await db.vocab.filter((v) => v.isTestData).delete()
 }
