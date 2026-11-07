@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import SelfTest from './pages/SelfTest'
+import Vocab from './pages/Vocab'
 import MetalPrototype from './pages/MetalPrototype'
 import JournalDreamcore from './pages/JournalDreamcore'
 import CloverDreamcore from './pages/CloverDreamcore'
@@ -13,6 +14,7 @@ import CloverDreamcore from './pages/CloverDreamcore'
 // 四叶草·梦核原型入口（prototype/clover-dreamcore 分支）：同理，
 // 加 ?clover=1 可直接打开原型。三个原型入口共存，互不影响。
 function App() {
+  const [showVocab, setShowVocab] = useState(false)
   const [showMetal, setShowMetal] = useState(
     () => new URLSearchParams(window.location.search).get('metal') === '1',
   )
@@ -22,6 +24,10 @@ function App() {
   const [showClover, setShowClover] = useState(
     () => new URLSearchParams(window.location.search).get('clover') === '1',
   )
+
+  if (showVocab) {
+    return <Vocab onBack={() => setShowVocab(false)} />
+  }
 
   if (showMetal) {
     return <MetalPrototype onBack={() => setShowMetal(false)} />
@@ -44,10 +50,14 @@ function App() {
         发音用浏览器自带韩语语音，复习用 FSRS 算法。
       </p>
       <div className="note">
-        当前版本：T0 项目初始化与技术架构验证。词汇、复习、统计功能尚未开发。
+        当前版本：P1 词汇地基。词汇导入、搜索筛选、每日背词计划已开发；复习、统计功能尚未开发。
         词汇分级规则：不标“官方 TOPIK X 级”，只用 NIKL-A/B/C、TOPIK-초급/중급、课程-X级参考三类来源标注。
+        全部种子只进待核实池；无中文释义的词显示“待补”，不编造。
       </div>
       <p>
+        <button type="button" onClick={() => setShowVocab(true)}>
+          词汇
+        </button>{' '}
         <button type="button" onClick={() => setShowMetal(true)}>
           金属风原型（预览）
         </button>{' '}
