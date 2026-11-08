@@ -6,13 +6,17 @@ import {
   type Paper,
   type Question,
 } from '../lib/db'
+import { scoreItems, type ScoredItem } from '../lib/scoring'
 import { ListeningAudio, WritingCard } from './Practice'
+import AnswerCard, { type AnswerCardState } from './AnswerCard'
 
-// TOPIK MASTER 2027 — 模拟考试页（P6：#14 模拟考试计时）
+// TOPIK MASTER 2027 — 模拟考试页（P6：#14 模拟考试计时；P7：#15 答题卡与自动计分）
 // 环节顺序按任务与分期计划：听力 → 阅读 → 写作；各环节时长可调，默认按 TOPIK II
 // 公开结构（听力 60 / 阅读 70 / 写作 50 分钟），页面标注“按 TOPIK II 公开结构，
 // 实际以当年准考证为准”——不编造确切考试结构与日期。
-// 结束页只出成绩摘要（已答 / 未答 / 用时），不自动判分、不出分数；自动计分在 P7 的 #15 接上。
+// 结束页出成绩：客观题自动判分（答对/总题数/正确率/按题型分项），写作题标“待自评”
+// （主观题不自动判分、不计正确率，与 P5/P6 口径一致）。
+// 考试进行中答题卡只显示已答/未答（不泄露对错，P6 口径）；考完后的回顾卡片才显示对错。
 // 词汇 / 语法 / 其他题型的题不计入本次模拟（页面明示数量）；客观题答案在环节结束时
 // 一次性写 attempts，写作答案以 subjective 标记写入（不计正确率，与 P5 口径一致）。
 
@@ -274,6 +278,37 @@ export default function MockExam({ onBack }: { onBack: () => void }) {
   const totalUnanswered = summaries.reduce((n, s) => n + s.unanswered, 0)
   const totalSeconds = summaries.reduce((n, s) => n + s.seconds, 0)
 
+  // P7（#15）：本次考试的自动计分（从内存里的答案算，与写 attempts 的判分口径一致——
+  // 客观题选对才算答对；写作题只记已写/未写，不自动判分、不计正确率）。
+  const examItems: ScoredItem[] = sections.flatMap((s) =>
+    s.questions.map((q) => {
+      const a = answers.get(q.id as number)
+      const objective = q.options.length > 0
+      return {
+        questionId: q.id as number,
+        qtype: q.qtype,
+        objective,
+        answered: objective ? a?.selected !== undefined : false,
+        correct: objective ? a?.selected === q.answerIndex : false,
+        subjectiveAnswered: !objective ? (a?.text?.trim() ?? '') !== '' : false,
+      }
+    }),
+  )
+  const examScore = scoreItems(examItems)
+
+  // P7（#15）：考试进行中的答题卡状态——只显示已答/未答，不泄露对错（P6 口径：
+  // “考试模式不显示对错”）；写作题只显示已写/未写。
+  const runningCardStates: AnswerCardState[] = currentSection
+    ? currentSection.questions.map((q) => {
+        const a = answers.get(q.id as number)
+        const objective = q.options.length > 0
+        if (!objective) {
+          return (a?.text?.trim() ?? '') !== '' ? 'subjective-answered' : 'subjective-unanswered'
+        }
+        return a?.selected === undefined ? 'unanswered' : 'answered'
+      })
+    : []
+
   return (
     <>
       <button type="button" className="secondary" onClick={onBack}>
@@ -281,8 +316,8 @@ export default function MockExam({ onBack }: { onBack: () => void }) {
       </button>
       <h1>模拟考试</h1>
       <p>
-        按听力 → 阅读 → 写作为环节计时走完（#14）。结束页只出成绩摘要（已答 / 未答 / 用时），
-        不自动判分、不出分数；自动计分在 P7 接上。
+        按听力 → 阅读 → 写作为环节计时走完（#14）。结束页出成绩：客观题自动判分（答对 / 总题数 /
+        正确率 / 按题型分项），写作题标“待自评”、不自动判分（#15）。考试进行中不显示对错。
       </p>
       <p>
         环节时长默认按 TOPIK II 公开结构（听力 60 分钟、阅读 70 分钟、写作 50 分钟），
@@ -365,6 +400,12 @@ export default function MockExam({ onBack }: { onBack: () => void }) {
             题型 {current.qtype} · 难度 {current.difficulty} · 来源 {current.source} · 核实状态{' '}
             {current.status}
           </p>
+          <AnswerCard
+            title={`答题卡（#15）· ${currentSection.label}环节`}
+            states={runningCardStates}
+            current={questionIdx}
+            onJump={setQuestionIdx}
+          />
 
           {current.qtype === '听力' && <ListeningAudio question={current} />}
 
@@ -450,11 +491,97 @@ export default function MockExam({ onBack }: { onBack: () => void }) {
 
       {stage === 'done' && (
         <>
-          <h2>成绩摘要（#14）</h2>
+          <h2>成绩（#15）</h2>
           <p>
-            {selectedPaper?.title ?? ''} · 本次模拟已完成。本页只出已答 / 未答 / 用时，
-            不自动判分、不出分数（自动计分在 P7 接上）。
+            {selectedPaper?.title ?? ''} · 本次模拟已完成。客观题自动判分；写作题不自动判分、
+            标“待自评”，请对照参考答案自评。
           </p>
+          <h3>自动计分（客观题）</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>项目</th>
+                <th>数量</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>客观题总数</td>
+                <td>{examScore.total} 道</td>
+              </tr>
+              <tr>
+                <td>已答</td>
+                <td>{examScore.answered} 道</td>
+              </tr>
+              <tr>
+                <td>答对</td>
+                <td>{examScore.correct} 道</td>
+              </tr>
+              <tr>
+                <td>答错</td>
+                <td>{examScore.wrong} 道</td>
+              </tr>
+              <tr>
+                <td>未答</td>
+                <td>{examScore.unanswered} 道</td>
+              </tr>
+              <tr>
+                <td>正确率（答对 ÷ 已答）</td>
+                <td>{examScore.accuracy === null ? '—（本次没答客观题）' : `${examScore.accuracy}%`}</td>
+              </tr>
+              <tr>
+                <td>主观题（写作）</td>
+                <td>
+                  已写 {examScore.subjectiveAnswered} / {examScore.subjectiveTotal} 道 · 待自评，不计正确率
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          {examScore.byQtype.length > 0 && (
+            <>
+              <h3>按题型分项</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>题型</th>
+                    <th>客观题答对 / 已答 / 总数</th>
+                    <th>正确率</th>
+                    <th>主观题已写 / 总数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {examScore.byQtype.map((row) => (
+                    <tr key={row.qtype}>
+                      <td>{row.qtype}</td>
+                      <td>
+                        {row.correct} / {row.answered} / {row.total}
+                      </td>
+                      <td>{row.accuracy === null ? '—' : `${row.accuracy}%`}</td>
+                      <td>
+                        {row.subjectiveAnswered} / {row.subjectiveTotal}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+          <h3>答题回顾（考后才显示对错）</h3>
+          {sections.map((s) => (
+            <AnswerCard
+              key={s.key}
+              title={`答题卡回顾 · ${s.label}环节`}
+              states={s.questions.map((q) => {
+                const it = examItems.find((x) => x.questionId === q.id)
+                if (!it) return 'unanswered'
+                if (!it.objective) return it.subjectiveAnswered ? 'subjective-answered' : 'subjective-unanswered'
+                if (!it.answered) return 'unanswered'
+                return it.correct ? 'correct' : 'wrong'
+              })}
+              current={-1}
+            />
+          ))}
+          <h3>用时摘要（#14）</h3>
           <table>
             <thead>
               <tr>
