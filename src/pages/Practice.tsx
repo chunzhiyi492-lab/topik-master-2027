@@ -5,16 +5,19 @@ import {
   getAllPapers,
   getAllQuestions,
   getAttemptsByQuestion,
+  getLatestWritingAttempt,
   getQuestionsByPaper,
   getWrongQuestionIds,
   importQuestionBank,
+  updateQuestionAudio,
   type Attempt,
   type Paper,
   type Question,
   type QuestionBankImportResult,
 } from '../lib/db'
 
-// TOPIK MASTER 2027 — 练习页（P5：#9 试卷练习、#17 题目解析与来源标记、#10 随机题目练习）
+// TOPIK MASTER 2027 — 练习页（P5：#9 试卷练习、#17 题目解析与来源标记、#10 随机题目练习；
+// P6：#11 听力音频、#12 阅读计时、#13 写作练习）
 // 题库出厂是空的：首批题目来源已定为“官方真题本地导入”——用户从 topik.go.kr
 // 下载官方真题后发来，再做成导入格式；本阶段不编造任何题目、不写任何真题或
 // 自编题进仓库。本页只搭模型、导入器与练习流程。
@@ -34,6 +37,273 @@ function shuffle<T>(arr: T[]): T[] {
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+function formatSeconds(total: number): string {
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+/**
+ * 听力音频块（P6 #11，Practice 与 MockExam 共用）。
+ * 音频文件本身不进仓库、不进 IndexedDB：题目只记文件名（question.audio），
+ * 用户每次练习重新选择本机音频文件，播放在会话内用 URL.createObjectURL 完成；
+ * 浏览器安全限制决定了文件无法跨会话保留，页面上明说，不假装已保存。
+ */
+export function ListeningAudio({ question }: { question: Question }) {
+  const [audioUrl, setAudioUrl] = useState('')
+  const [audioRef, setAudioRef] = useState(question.audio ?? '')
+  const [audioStatus, setAudioStatus] = useState('')
+  const [audioError, setAudioError] = useState('')
+  const fileRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    setAudioRef(question.audio ?? '')
+    setAudioUrl('')
+    setAudioStatus('')
+    setAudioError('')
+  }, [question.id, question.audio])
+
+  useEffect(
+    () => () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl)
+    },
+    [audioUrl],
+  )
+
+  const handleAudioFile = async (file: File | undefined) => {
+    if (!file || question.id === undefined) return
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    const url = URL.createObjectURL(file)
+    setAudioUrl(url)
+    setAudioStatus('已选择文件，等待播放')
+    setAudioError('')
+    try {
+      await updateQuestionAudio(question.id, file.name)
+      setAudioRef(file.name)
+    } catch (e) {
+      setAudioError(`记音频引用失败：${e instanceof Error ? e.message : String(e)}`)
+    }
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  return (
+    <div className="note">
+      <p>
+        <b>听力音频（#11）</b>
+      </p>
+      {audioRef ? (
+        <p>音频引用：{audioRef}</p>
+      ) : (
+        <p className="fail">未导入音频：本题还没有关联音频文件。</p>
+      )}
+      <p>
+        音频文件不存题库、不进仓库；每次练习请重新选择本机音频文件。
+        官方音频请先从{' '}
+        <a href="https://www.topik.go.kr" target="_blank" rel="noreferrer">
+          TOPIK 官网（topik.go.kr）学习资料室
+        </a>{' '}
+        下载。
+      </p>
+      <p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="audio/*"
+          onChange={(e) => void handleAudioFile(e.target.files?.[0])}
+        />
+      </p>
+      {audioUrl && (
+        <>
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <audio
+            controls
+            src={audioUrl}
+            preload="metadata"
+            onLoadedMetadata={() => setAudioStatus('音频已加载，可以播放')}
+            onPlay={() => setAudioStatus('朗读中…')}
+            onPlaying={() => setAudioStatus('正在播放')}
+            onEnded={() => setAudioStatus('播放结束')}
+            onError={() => {
+              setAudioStatus('')
+              setAudioError('音频加载失败：文件可能损坏或格式不受支持，请换一个音频文件。')
+            }}
+          />
+          {audioStatus && <p>{audioStatus}</p>}
+        </>
+      )}
+      {audioError && <p className="fail">{audioError}</p>}
+    </div>
+  )
+}
+
+const WRITING_CHECKLIST = [
+  '结构完整（开头—正文—结尾）',
+  '语法正确，没有明显语病',
+  '词汇准确，没有生造词',
+  '字数符合要求',
+  '通读一遍，没有漏词错字',
+]
+
+function loadChecklist(questionId: number): boolean[] {
+  try {
+    const raw = localStorage.getItem(`topik-master-writing-checklist-${questionId}`)
+    if (!raw) return WRITING_CHECKLIST.map(() => false)
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return WRITING_CHECKLIST.map(() => false)
+    return WRITING_CHECKLIST.map((_, i) => parsed[i] === true)
+  } catch {
+    return WRITING_CHECKLIST.map(() => false)
+  }
+}
+
+/**
+ * 写作卡片（P6 #13，Practice 与 MockExam 共用）。
+ * 字数 = 去掉空白后的字符数；用时 = 本卡片打开后经过的秒数（页面内计时）；
+ * 自查清单存在本机 localStorage；保存时把全文与用时交给 onSave——
+ * Practice 里 onSave 写 attempts（主观题，不计正确率），MockExam 里 onSave
+ * 只记进本次考试的答案状态，到环节结束再统一写 attempts。
+ */
+export function WritingCard({
+  question,
+  initialText,
+  onSave,
+  showReference,
+  onSkip,
+}: {
+  question: Question
+  initialText: string
+  onSave: (text: string, seconds: number) => void | Promise<void>
+  showReference: boolean
+  onSkip?: () => void
+}) {
+  const [text, setText] = useState(initialText)
+  const [elapsed, setElapsed] = useState(0)
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [checklist, setChecklist] = useState<boolean[]>(() =>
+    question.id === undefined ? WRITING_CHECKLIST.map(() => false) : loadChecklist(question.id),
+  )
+  // 用户是否已在本卡片里打过字：打过字后，异步读到的初始文案不再覆盖输入框。
+  const touchedRef = useRef(false)
+
+  useEffect(() => {
+    touchedRef.current = false
+    setText(initialText)
+    setElapsed(0)
+    setSaved(false)
+    setChecklist(
+      question.id === undefined ? WRITING_CHECKLIST.map(() => false) : loadChecklist(question.id),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question.id])
+
+  // 初始文案是异步读到的（重进本题时从 attempts 恢复最新一次保存的答案）：
+  // 读到后再同步进输入框；若用户已经开始打字则不覆盖。
+  useEffect(() => {
+    if (!touchedRef.current) setText(initialText)
+  }, [initialText])
+
+  useEffect(() => {
+    if (saved) return
+    const start = Date.now()
+    const t = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000))
+    }, 500)
+    return () => window.clearInterval(t)
+  }, [saved])
+
+  const wordCount = text.replace(/\s/g, '').length
+
+  const toggleCheck = (i: number) => {
+    setChecklist((prev) => {
+      const next = prev.map((v, j) => (j === i ? !v : v))
+      if (question.id !== undefined) {
+        try {
+          localStorage.setItem(
+            `topik-master-writing-checklist-${question.id}`,
+            JSON.stringify(next),
+          )
+        } catch {
+          /* localStorage 写失败不阻塞写作 */
+        }
+      }
+      return next
+    })
+  }
+
+  const handleSave = async () => {
+    if (saving) return
+    setSaving(true)
+    try {
+      await onSave(text, elapsed)
+      setSaved(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="note">
+      <p>
+        <b>写作练习（#13）</b> · 字数：{wordCount}（不计空格） · 本次用时：{formatSeconds(elapsed)}
+      </p>
+      <p>
+        <textarea
+          value={text}
+          onChange={(e) => {
+            touchedRef.current = true
+            setText(e.target.value)
+            setSaved(false)
+          }}
+          rows={8}
+          style={{ width: '100%' }}
+          placeholder="在这里用韩语写答案……（保存后刷新还在）"
+        />
+      </p>
+      <p>自查清单：</p>
+      {WRITING_CHECKLIST.map((item, i) => (
+        <p key={item}>
+          <label>
+            <input type="checkbox" checked={checklist[i]} onChange={() => toggleCheck(i)} />{' '}
+            {item}
+          </label>
+        </p>
+      ))}
+      <p>
+        <button type="button" onClick={() => void handleSave()} disabled={saving || text.trim() === ''}>
+          {saved ? '已保存' : '保存答案'}
+        </button>{' '}
+        {onSkip && (
+          <button type="button" className="secondary" onClick={onSkip}>
+            跳过本题
+          </button>
+        )}
+      </p>
+      {saved && <p>已保存：答案与用时已记录，刷新后还在。</p>}
+      {showReference && saved && (
+        <>
+          {question.answer && (
+            <p>
+              参考答案：{question.answer}
+            </p>
+          )}
+          {question.explanation && (
+            <p>
+              解析：{question.explanation}
+            </p>
+          )}
+          <p>
+            来源：{question.source} · 核实状态：{question.status}
+          </p>
+        </>
+      )}
+      {showReference && !saved && (
+        <p>保存答案后可查看参考答案与解析（写作不自动判分）。</p>
+      )}
+    </div>
+  )
 }
 
 export default function Practice({ onBack }: { onBack: () => void }) {
@@ -59,6 +329,12 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   const [randomScope, setRandomScope] = useState<Scope>('all')
   const [randomCount, setRandomCount] = useState(5)
   const [randomNote, setRandomNote] = useState('')
+  // P6：写作卡片状态（初始文案来自最新一次保存的答案，刷新后还在）与阅读计时。
+  const [writingInitial, setWritingInitial] = useState('')
+  const [writingPrevSeconds, setWritingPrevSeconds] = useState(0)
+  const [writingSaved, setWritingSaved] = useState(false)
+  const [timeLeft, setTimeLeft] = useState<number | null>(null)
+  const [timeUp, setTimeUp] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const refresh = async () => {
@@ -74,12 +350,60 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     let correct = 0
     for (const q of qs) {
       const list: Attempt[] = await getAttemptsByQuestion(q.id as number)
-      attempts += list.length
-      correct += list.filter((a) => a.correct).length
+      // P6：写作等主观题答题（subjective）不计入正确率。
+      const objective = list.filter((a) => !a.subjective)
+      attempts += objective.length
+      correct += objective.filter((a) => a.correct).length
     }
     setTotalAttempts(attempts)
     setTotalCorrect(correct)
   }
+
+  const current = sessionQuestions.length > 0 ? sessionQuestions[currentIdx] : null
+  const isObjective = current !== null && current.options.length > 0
+  const isWriting = current !== null && current.qtype === '写作' && !isObjective
+
+  // P6：当前是写作题时，读最新一次保存的答案做初始文案（刷新后答案还在）。
+  useEffect(() => {
+    let cancelled = false
+    if (current && isWriting && current.id !== undefined) {
+      void getLatestWritingAttempt(current.id).then((a) => {
+        if (cancelled) return
+        setWritingInitial(a?.selectedAnswer ?? '')
+        setWritingPrevSeconds(a?.writingSeconds ?? 0)
+      })
+    } else {
+      setWritingInitial('')
+      setWritingPrevSeconds(0)
+    }
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id])
+
+  // P6：阅读题限时倒计时（timeLimit 分钟；时间戳算剩余，不靠累加，页面切走不丢）。
+  // 无 timeLimit 的题不计时。时间到只明确提示，不强制锁题（练习模式）。
+  useEffect(() => {
+    if (current && current.qtype === '阅读' && current.timeLimit) {
+      const end = Date.now() + current.timeLimit * 60000
+      setTimeLeft(current.timeLimit * 60)
+      setTimeUp(false)
+      const t = window.setInterval(() => {
+        const left = Math.max(0, Math.round((end - Date.now()) / 1000))
+        setTimeLeft(left)
+        if (left <= 0) {
+          setTimeUp(true)
+          window.clearInterval(t)
+        }
+      }, 500)
+      return () => window.clearInterval(t)
+    }
+    setTimeLeft(null)
+    setTimeUp(false)
+    return undefined
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id])
 
   useEffect(() => {
     void refresh()
@@ -91,6 +415,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setSubmitted(false)
     setLastCorrect(null)
     setShowReference(false)
+    setWritingSaved(false)
   }
 
   const startPaper = async (paper: Paper) => {
@@ -138,9 +463,6 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setRandomNote(`已抽 ${drawn.length} 道（题库符合筛选共 ${pool.length} 道）。`)
   }
 
-  const current = sessionQuestions.length > 0 ? sessionQuestions[currentIdx] : null
-  const isObjective = current !== null && current.options.length > 0
-
   const handleSubmit = async () => {
     if (!current || current.id === undefined || selected === null || submitting) return
     setSubmitting(true)
@@ -161,6 +483,27 @@ export default function Practice({ onBack }: { onBack: () => void }) {
       setError(`记录答题失败：${e instanceof Error ? e.message : String(e)}`)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // P6：写作保存——答案存 attempts（subjective，不自动判分、不计正确率、不进错题范围）。
+  const handleWritingSave = async (text: string, seconds: number) => {
+    if (!current || current.id === undefined) return
+    setError('')
+    try {
+      await addAttempt({
+        questionId: current.id,
+        paperId: sessionPaper?.id,
+        selectedAnswer: text,
+        correct: false,
+        answeredAt: new Date(),
+        subjective: true,
+        writingSeconds: seconds,
+      })
+      setWritingSaved(true)
+      await refresh()
+    } catch (e) {
+      setError(`保存答案失败：${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -367,78 +710,113 @@ export default function Practice({ onBack }: { onBack: () => void }) {
             第 {currentIdx + 1} / {sessionQuestions.length} 道 · 题型 {current.qtype} · 难度{' '}
             {current.difficulty} · 来源 {current.source} · 核实状态 {current.status}
           </p>
-          <div className="note">
-            <p style={{ fontSize: 17 }}>{current.stem}</p>
-            {isObjective ? (
-              <>
-                {current.options.map((opt, i) => (
-                  <p key={i}>
-                    <button
-                      type="button"
-                      className={selected === i ? undefined : 'secondary'}
-                      disabled={submitted}
-                      onClick={() => setSelected(i)}
-                    >
-                      {String.fromCharCode(65 + i)}. {opt}
-                    </button>
-                  </p>
-                ))}
-                {!submitted ? (
-                  <p>
-                    <button type="button" onClick={() => void handleSubmit()} disabled={selected === null || submitting}>
-                      提交答案
-                    </button>
-                  </p>
-                ) : (
-                  <>
-                    <p className={lastCorrect ? 'pass' : 'fail'}>
-                      {lastCorrect ? '答对了' : '答错了'}。正确答案：
-                      {current.answerIndex !== null
-                        ? `${String.fromCharCode(65 + current.answerIndex)}. ${current.options[current.answerIndex]}`
-                        : '—'}
-                    </p>
-                    {current.explanation && (
-                      <p>
-                        解析：{current.explanation}
-                      </p>
-                    )}
-                    <p>
-                      来源：{current.source} · 核实状态：{current.status}
-                      {current.status === '待核实' ? '（未核实来源，仅供练习参考）' : ''}
-                    </p>
-                  </>
+          {current.qtype === '听力' && <ListeningAudio question={current} />}
+          {current.qtype === '阅读' && current.timeLimit !== undefined && (
+            <div className="note">
+              <p>
+                阅读计时（#12）：限时 {current.timeLimit} 分钟 · 剩余{' '}
+                {timeLeft !== null ? formatSeconds(timeLeft) : '—'}
+              </p>
+              {timeUp && <p className="fail">时间到！请提交答案（练习模式不锁题）。</p>}
+            </div>
+          )}
+          {current.qtype === '阅读' && current.timeLimit === undefined && (
+            <p>本题未设限时。</p>
+          )}
+          {isWriting ? (
+            <>
+              <div className="note">
+                <p style={{ fontSize: 17 }}>{current.stem}</p>
+                <p>
+                  来源：{current.source} · 核实状态：{current.status}
+                  {current.status === '待核实' ? '（未核实来源，仅供练习参考）' : ''}
+                </p>
+                {writingPrevSeconds > 0 && (
+                  <p>上次保存用时：{formatSeconds(writingPrevSeconds)}</p>
                 )}
-              </>
-            ) : (
-              <>
-                <p>主观题（写作 / 简答）：不自动判分，答题记录在 P6 写作练习里接。</p>
-                {!showReference ? (
-                  <p>
-                    <button type="button" onClick={() => setShowReference(true)}>
-                      查看参考答案与解析
-                    </button>
-                  </p>
-                ) : (
-                  <>
-                    {current.answer && (
-                      <p>
-                        参考答案：{current.answer}
-                      </p>
-                    )}
-                    {current.explanation && (
-                      <p>
-                        解析：{current.explanation}
-                      </p>
-                    )}
-                    <p>
-                      来源：{current.source} · 核实状态：{current.status}
+              </div>
+              <WritingCard
+                question={current}
+                initialText={writingInitial}
+                onSave={(text, seconds) => void handleWritingSave(text, seconds)}
+                showReference
+                onSkip={handleNext}
+              />
+            </>
+          ) : (
+            <div className="note">
+              <p style={{ fontSize: 17 }}>{current.stem}</p>
+              {isObjective ? (
+                <>
+                  {current.options.map((opt, i) => (
+                    <p key={i}>
+                      <button
+                        type="button"
+                        className={selected === i ? undefined : 'secondary'}
+                        disabled={submitted}
+                        onClick={() => setSelected(i)}
+                      >
+                        {String.fromCharCode(65 + i)}. {opt}
+                      </button>
                     </p>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-          {(submitted || !isObjective) && (
+                  ))}
+                  {!submitted ? (
+                    <p>
+                      <button type="button" onClick={() => void handleSubmit()} disabled={selected === null || submitting}>
+                        提交答案
+                      </button>
+                    </p>
+                  ) : (
+                    <>
+                      <p className={lastCorrect ? 'pass' : 'fail'}>
+                        {lastCorrect ? '答对了' : '答错了'}。正确答案：
+                        {current.answerIndex !== null
+                          ? `${String.fromCharCode(65 + current.answerIndex)}. ${current.options[current.answerIndex]}`
+                          : '—'}
+                      </p>
+                      {current.explanation && (
+                        <p>
+                          解析：{current.explanation}
+                        </p>
+                      )}
+                      <p>
+                        来源：{current.source} · 核实状态：{current.status}
+                        {current.status === '待核实' ? '（未核实来源，仅供练习参考）' : ''}
+                      </p>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>主观题不自动判分。</p>
+                  {!showReference ? (
+                    <p>
+                      <button type="button" onClick={() => setShowReference(true)}>
+                        查看参考答案与解析
+                      </button>
+                    </p>
+                  ) : (
+                    <>
+                      {current.answer && (
+                        <p>
+                          参考答案：{current.answer}
+                        </p>
+                      )}
+                      {current.explanation && (
+                        <p>
+                          解析：{current.explanation}
+                        </p>
+                      )}
+                      <p>
+                        来源：{current.source} · 核实状态：{current.status}
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          {(submitted || (isWriting ? writingSaved : !isObjective)) && (
             <p>
               <button type="button" onClick={handleNext}>
                 {currentIdx + 1 < sessionQuestions.length ? '下一题' : '结束练习'}
