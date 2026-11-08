@@ -61,10 +61,78 @@ export interface DailyStat {
   minutes: number
 }
 
+// ---- P5 新增：试题系统（#9 / #17 / #10）----
+// 铁律：官方真题只做 topik.go.kr 下载链接 + 用户本地导入，绝不打包官方文件进仓库；
+// 自编题一律标“自编练习题，非官方真题”，绝不把自编题标成官方真题；
+// 本阶段题库出厂是空的——没有真题、没有自编题进库，只搭模型与导入器。
+
+/** 题目核实状态：已核实 / 待核实（缺来源的条目不入库，见 importQuestionBank）。 */
+export type QuestionStatus = '已核实' | '待核实'
+
+/** 题型：听力 / 阅读 / 写作 / 词汇 / 语法 / 其他（P6 听力加 audio、写作加计时）。 */
+export type QuestionType = '听力' | '阅读' | '写作' | '词汇' | '语法' | '其他'
+
+export interface Question {
+  id?: number
+  /** 题干 */
+  stem: string
+  /** 选项（客观题）；主观题/写作题为空数组 */
+  options: string[]
+  /** 正确选项下标（客观题）；主观题为 null */
+  answerIndex: number | null
+  /** 参考答案 / 评分要点（主观题用；客观题可空） */
+  answer: string
+  /** 解析 */
+  explanation: string
+  /** 来源（必填）：如“TOPIK 84회 읽기”或“自编练习题”；缺来源不入库 */
+  source: string
+  /** 核实状态 */
+  status: QuestionStatus
+  /** 题型 */
+  qtype: QuestionType
+  /** 难度：易 / 中 / 难（导入时缺省为“中”） */
+  difficulty: string
+  /** 所属试卷 id（未分组的题留空，随机抽题可用） */
+  paperId?: number
+  /** 卷内题序（导入时缺省按导入顺序） */
+  order: number
+}
+
+export interface Paper {
+  id?: number
+  /** 场次，如“TOPIK 84회” */
+  title: string
+  /** 级别：TOPIK I / TOPIK II */
+  level: string
+  /** 考试日期 YYYY-MM-DD（未知留空） */
+  examDate: string
+  /** 来源（必填） */
+  source: string
+  /** 核实状态 */
+  status: QuestionStatus
+  /** 备注 */
+  note: string
+}
+
+export interface Attempt {
+  id?: number
+  questionId: number
+  /** 答题时所在的试卷（随机抽题留空） */
+  paperId?: number
+  /** 选中的选项文本 */
+  selectedAnswer: string
+  /** 是否答对（主观题不自动判分、不写 attempts） */
+  correct: boolean
+  answeredAt: Date
+}
+
 class TopikDB extends Dexie {
   vocab!: Table<VocabEntry, number>
   reviews!: Table<ReviewRecord, number>
   daily_stats!: Table<DailyStat, number>
+  questions!: Table<Question, number>
+  papers!: Table<Paper, number>
+  attempts!: Table<Attempt, number>
 
   constructor() {
     super('topik-master-2027')
@@ -72,6 +140,16 @@ class TopikDB extends Dexie {
       vocab: '++id, ko, pos, source, source_level, yonsei_lesson, status, favorite',
       reviews: '++id, vocabId, reviewedAt, dueAt',
       daily_stats: '++id, date',
+    })
+    // P5：version 2 新增 questions / papers / attempts 三张表。
+    // Dexie 要求每个版本都声明全部表；升级只加空表，旧数据（词汇/复习/统计）原样保留。
+    this.version(2).stores({
+      vocab: '++id, ko, pos, source, source_level, yonsei_lesson, status, favorite',
+      reviews: '++id, vocabId, reviewedAt, dueAt',
+      daily_stats: '++id, date',
+      questions: '++id, paperId, qtype, difficulty, status, source',
+      papers: '++id, level, status, title',
+      attempts: '++id, questionId, paperId, answeredAt, correct',
     })
   }
 }
@@ -224,6 +302,255 @@ export async function addReview(rec: Omit<ReviewRecord, 'id'>): Promise<number> 
   return db.reviews.add(rec)
 }
 
+// ---- P5 新增：试题查询函数与题库导入器 ----
+
+export async function getAllPapers(): Promise<Paper[]> {
+  return db.papers.toArray()
+}
+
+export async function getPaperById(id: number): Promise<Paper | undefined> {
+  return db.papers.get(id)
+}
+
+export async function countPapers(): Promise<number> {
+  return db.papers.count()
+}
+
+export async function getAllQuestions(): Promise<Question[]> {
+  return db.questions.toArray()
+}
+
+export async function countQuestions(): Promise<number> {
+  return db.questions.count()
+}
+
+/** 某场试卷的全部题目（按 order、再按 id 升序）。 */
+export async function getQuestionsByPaper(paperId: number): Promise<Question[]> {
+  const list = await db.questions.where('paperId').equals(paperId).toArray()
+  return list.sort((a, b) => a.order - b.order || (a.id ?? 0) - (b.id ?? 0))
+}
+
+export async function getQuestionById(id: number): Promise<Question | undefined> {
+  return db.questions.get(id)
+}
+
+/** 某道题的全部答题记录（按时间升序）。 */
+export async function getAttemptsByQuestion(questionId: number): Promise<Attempt[]> {
+  const list = await db.attempts.where('questionId').equals(questionId).toArray()
+  return list.sort((a, b) => a.answeredAt.getTime() - b.answeredAt.getTime())
+}
+
+/** 错题范围：最新一次答题答错的题目 id（主观题不写 attempts，不在错题范围里）。 */
+export async function getWrongQuestionIds(): Promise<number[]> {
+  const all = await db.attempts.toArray()
+  const latest = new Map<number, Attempt>()
+  for (const a of all) {
+    const cur = latest.get(a.questionId)
+    if (!cur || a.answeredAt.getTime() >= cur.answeredAt.getTime()) {
+      latest.set(a.questionId, a)
+    }
+  }
+  return [...latest.entries()].filter(([, a]) => !a.correct).map(([id]) => id)
+}
+
+export async function addAttempt(rec: Omit<Attempt, 'id'>): Promise<number> {
+  return db.attempts.add(rec)
+}
+
+/** 只清空题库（questions / papers / attempts），不碰词汇、复习、统计数据。 */
+export async function clearQuestionBank(): Promise<void> {
+  await db.transaction('rw', db.questions, db.papers, db.attempts, async () => {
+    await db.questions.clear()
+    await db.papers.clear()
+    await db.attempts.clear()
+  })
+}
+
+export interface QuestionBankImportResult {
+  papersAdded: number
+  papersReused: number
+  questionsAdded: number
+  questionsSkipped: number
+  /** 每条形如“第 3 题：缺来源字段，已拒绝”；成功导入时为空数组。 */
+  errors: string[]
+}
+
+const QUESTION_TYPES: QuestionType[] = ['听力', '阅读', '写作', '词汇', '语法', '其他']
+
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === 'string' && v.trim() !== ''
+}
+
+function asOptionalString(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
+
+function asStatus(v: unknown): QuestionStatus {
+  return v === '已核实' ? '已核实' : '待核实'
+}
+
+/**
+ * 题库导入（P5：#9 / #17）。
+ * 格式：{ papers?: PaperInput[], questions?: QuestionInput[] }，字段见 ACCEPTANCE.md P5 一节。
+ * 校验铁律：题干、来源、题型缺一不可，缺来源的条目拒绝入库并报错、不静默丢弃；
+ * 客观题（options 非空）answerIndex 必须在选项范围内；主观题（options 为空）answerIndex 必须为空。
+ * 同名试卷复用已有试卷（不重复建卷）；同一试卷内题干重复的题跳过（记入 questionsSkipped）。
+ * 先全部校验、再一次性写入；写入失败时整批不落库。
+ */
+export async function importQuestionBank(jsonText: string): Promise<QuestionBankImportResult> {
+  let data: unknown
+  try {
+    data = JSON.parse(jsonText)
+  } catch {
+    throw new Error('不是有效的 JSON 文件')
+  }
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('导入文件结构不对：顶层应为对象 { papers: [...], questions: [...] }')
+  }
+  const rawPapers: unknown[] = Array.isArray((data as { papers?: unknown }).papers)
+    ? (data as { papers: unknown[] }).papers
+    : []
+  const rawQuestions: unknown[] = Array.isArray((data as { questions?: unknown }).questions)
+    ? (data as { questions: unknown[] }).questions
+    : []
+  if (rawPapers.length === 0 && rawQuestions.length === 0) {
+    throw new Error('导入文件里没有试卷也没有题目')
+  }
+
+  const errors: string[] = []
+  // --- 校验试卷 ---
+  const validPapers: Omit<Paper, 'id'>[] = []
+  rawPapers.forEach((p, i) => {
+    const label = `第 ${i + 1} 张试卷`
+    if (typeof p !== 'object' || p === null || Array.isArray(p)) {
+      errors.push(`${label}：不是对象，已拒绝`)
+      return
+    }
+    const r = p as Record<string, unknown>
+    if (!isNonEmptyString(r.title)) {
+      errors.push(`${label}：缺 title（场次名称），已拒绝`)
+      return
+    }
+    if (!isNonEmptyString(r.source)) {
+      errors.push(`${label}：缺 source（来源），已拒绝`)
+      return
+    }
+    validPapers.push({
+      title: (r.title as string).trim(),
+      level: asOptionalString(r.level),
+      examDate: asOptionalString(r.examDate),
+      source: (r.source as string).trim(),
+      status: asStatus(r.status),
+      note: asOptionalString(r.note),
+    })
+  })
+
+  // --- 校验题目 ---
+  interface ValidQuestion extends Omit<Question, 'id' | 'paperId'> {
+    paperTitle: string
+  }
+  const validQuestions: ValidQuestion[] = []
+  rawQuestions.forEach((q, i) => {
+    const label = `第 ${i + 1} 道题`
+    if (typeof q !== 'object' || q === null || Array.isArray(q)) {
+      errors.push(`${label}：不是对象，已拒绝`)
+      return
+    }
+    const r = q as Record<string, unknown>
+    if (!isNonEmptyString(r.stem)) {
+      errors.push(`${label}：缺 stem（题干），已拒绝`)
+      return
+    }
+    if (!isNonEmptyString(r.source)) {
+      errors.push(`${label}：缺 source（来源），已拒绝`)
+      return
+    }
+    if (!isNonEmptyString(r.qtype) || !QUESTION_TYPES.includes(r.qtype as QuestionType)) {
+      errors.push(`${label}：qtype（题型）缺失或不在允许范围（听力/阅读/写作/词汇/语法/其他），已拒绝`)
+      return
+    }
+    const options: string[] = Array.isArray(r.options)
+      ? (r.options as unknown[]).map((o) => (typeof o === 'string' ? o : ''))
+      : []
+    if (options.some((o) => o === '')) {
+      errors.push(`${label}：options 里有空选项，已拒绝`)
+      return
+    }
+    let answerIndex: number | null = null
+    if (options.length > 0) {
+      if (
+        typeof r.answerIndex !== 'number' ||
+        !Number.isInteger(r.answerIndex) ||
+        r.answerIndex < 0 ||
+        r.answerIndex >= options.length
+      ) {
+        errors.push(`${label}：answerIndex（正确选项下标）缺失或超出选项范围，已拒绝`)
+        return
+      }
+      answerIndex = r.answerIndex
+    } else if (r.answerIndex !== undefined && r.answerIndex !== null) {
+      errors.push(`${label}：主观题（options 为空）不应填 answerIndex，已拒绝`)
+      return
+    }
+    validQuestions.push({
+      stem: (r.stem as string).trim(),
+      options,
+      answerIndex,
+      answer: asOptionalString(r.answer),
+      explanation: asOptionalString(r.explanation),
+      source: (r.source as string).trim(),
+      status: asStatus(r.status),
+      qtype: r.qtype as QuestionType,
+      difficulty: isNonEmptyString(r.difficulty) ? (r.difficulty as string).trim() : '中',
+      paperTitle: asOptionalString(r.paperTitle),
+      order: typeof r.order === 'number' ? r.order : 0,
+    })
+  })
+
+  // --- 写入（先试卷、再题目；同名试卷复用） ---
+  let papersAdded = 0
+  let papersReused = 0
+  let questionsAdded = 0
+  let questionsSkipped = 0
+  const paperIdByTitle = new Map<string, number>()
+  await db.transaction('rw', db.papers, db.questions, async () => {
+    const existingPapers = await db.papers.toArray()
+    for (const p of existingPapers) paperIdByTitle.set(p.title, p.id as number)
+    for (const p of validPapers) {
+      const reused = paperIdByTitle.get(p.title)
+      if (reused !== undefined) {
+        papersReused += 1
+        continue
+      }
+      const id = await db.papers.add(p)
+      paperIdByTitle.set(p.title, id)
+      papersAdded += 1
+    }
+    const existingQuestions = await db.questions.toArray()
+    const seen = new Set(existingQuestions.map((q) => `${q.paperId ?? ''}::${q.stem}`))
+    for (const q of validQuestions) {
+      let paperId: number | undefined
+      if (q.paperTitle) {
+        paperId = paperIdByTitle.get(q.paperTitle)
+        if (paperId === undefined) {
+          errors.push(`题干“${q.stem.slice(0, 20)}”：paperTitle“${q.paperTitle}”找不到对应试卷，已拒绝`)
+          continue
+        }
+      }
+      const key = `${paperId ?? ''}::${q.stem}`
+      if (seen.has(key)) {
+        questionsSkipped += 1
+        continue
+      }
+      seen.add(key)
+      const { paperTitle: _paperTitle, ...rest } = q
+      await db.questions.add({ ...rest, paperId })
+      questionsAdded += 1
+    }
+  })
+  return { papersAdded, papersReused, questionsAdded, questionsSkipped, errors }
+}
+
 export async function getReviewsByVocab(vocabId: number): Promise<ReviewRecord[]> {
   return db.reviews.where('vocabId').equals(vocabId).toArray()
 }
@@ -271,11 +598,14 @@ export async function importJSON(jsonText: string): Promise<{ vocab: number; rev
 }
 
 export async function clearAllData(): Promise<void> {
-  await db.transaction('rw', db.vocab, db.reviews, db.daily_stats, async () => {
-    await db.vocab.clear()
-    await db.reviews.clear()
-    await db.daily_stats.clear()
-  })
+  // Dexie 的 transaction() 重载最多 7 个参数，6 张表 + mode + scope 共 8 个会报类型错；
+  // 清空是幂等操作，逐表清即可（每张表的 clear() 本身是原子的）。
+  await db.vocab.clear()
+  await db.reviews.clear()
+  await db.daily_stats.clear()
+  await db.questions.clear()
+  await db.papers.clear()
+  await db.attempts.clear()
 }
 
 /**
