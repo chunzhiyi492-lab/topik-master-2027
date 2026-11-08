@@ -274,3 +274,65 @@
 - 25 分钟专注轮没有真实等过（P4 遗留）；iPhone 后台计时未实测（P4 遗留）。
 - **同一 profile 从旧构建切到新构建时，旧 Service Worker 会继续提供缓存的旧版页面**：本次迁移验收第一轮，首页版本说明一直停留在 P4（数据核对却通过了——因为读的是旧构建 + 旧数据，Dexie 升级根本没跑）；用 CDP 清掉该 origin 的 cache_storage + service_workers（不动 IndexedDB 与 localStorage）并带缓存破坏参数重新导航后，才切到 P5 构建、升级真正跑起来。线上部署后如遇手机上仍显示旧版本，先关掉 PWA 再重开（或刷新）即可。
 - 写作/主观题本阶段只展示参考答案与解析，不记录答题、不计入正确率与错题范围，P6 再接。
+
+## P6 听说读写（#11 / #12 / #13 / #14）——2026-11-08
+
+分支：`feature/p6-skills-mock`（worktree `~/workspace/topik-master-2027-p6`，基于 main 35c83b4）。
+
+首批题目来源仍是 P5 已定的**官方真题本地导入**，她还没发来卷子文件时本阶段继续用测试夹具验证。**不编造任何题目、不写任何真题或自编题进仓库、不打包任何音频进仓库**——题库出厂仍为空。测试夹具与截图都在 `~/workspace/p6-skills/`（不进仓库）。
+
+### 改动文件
+- `src/lib/db.ts`：升到 Dexie version 3（升级钩子归一化旧题目记录：缺 `audio` 的补空字符串）；`Question` 加 `audio?: string`（音频文件名引用，只记引用、不存音频文件本身；空/缺省 = 未导入音频）与 `timeLimit?: number`（限时分钟，1–600 正整数；缺省 = 未设限时）；`Attempt` 加 `subjective?: boolean`（写作等主观题标记，不自动判分、不计正确率、不进错题范围）与 `writingSeconds?: number`；新增 `updateQuestionAudio(id, fileName)` 与 `getLatestWritingAttempt(questionId)`；`getWrongQuestionIds` 跳过 subjective 答题；`importQuestionBank` 接受 `audio`（字符串，可空）与 `timeLimit`（1–600 正整数，否则拒绝入库并报错）。
+- `src/lib/db.ts` 另修一处 P5 导入器去重键（与 TOPIK I 转录实测有关，见下）：去重键由 `paperId::stem` 改为 `paperId::order`（order 缺失默认 0 时退回按题干去重）。102 回 TOPIK I 听力转录实测：同组题题干相同，旧键初版只进了 13/30；改键后同组题按题号区分，重复导入仍按题号跳过。
+- `src/pages/Practice.tsx`：新增并导出共用组件 `ListeningAudio`（听力音频块：文件选择 `accept="audio/*"`、`<audio controls>`、音频引用持久化、topik.go.kr 学习资料室链接）与 `WritingCard`（写作卡片：textarea、字数 = 去空白字符数、用时 = 本卡片打开后经过秒数、自查清单 5 项存 localStorage、保存后可看参考答案与解析）；阅读题 `timeLimit` 倒计时（时间戳算剩余，500ms tick，时间到只提示、不锁题）；写作答案写 attempts（subjective，不计正确率）；正确率统计排除 subjective 答题。
+- 新建 `src/pages/MockExam.tsx`：模拟考试（#14），听力 → 阅读 → 写作按环节计时走完；各环节时长可调（localStorage 持久化），默认按 TOPIK II 公开结构（听力 60 / 阅读 70 / 写作 50 分钟），页面标注“按 TOPIK II 公开结构，实际以当年准考证为准”；结束页只出成绩摘要（已答 / 未答 / 用时），不自动判分、不出分数（自动计分在 P7 的 #15 接上）；词汇 / 语法 / 其他题型的题不计入本次模拟（页内明示数量）；客观题答案在环节结束时统一写 attempts，写作答案 subjective 写 attempts。
+- `src/App.tsx`：只加首页“模拟考试”入口；版本说明改成 P6；其余入口保留。
+- `speech.ts` / `srs.ts` / `streak.ts` / `review.ts` / `stats.ts` / `SelfTest.tsx` / `Vocab.tsx` / `Review.tsx` / `Stats.tsx` / `Plan.tsx` / `Focus.tsx` / `MetalPrototype` / `CloverDreamcore` / `data/` / `scripts/` / `vite.config` / PWA / `package.json` 未动；无新依赖；未写任何题目进仓库；未放任何音频文件进仓库。
+
+### 口径（写死，防以后扯皮）
+- 音频只记文件名引用，不存音频文件本身、不进仓库、不进 IndexedDB 的题目记录大二进制；每次练习需重新选择本机音频文件（浏览器安全限制决定了文件无法跨会话保留，页面上明说，不假装已保存）；官方音频请从 topik.go.kr 学习资料室下载。
+- 写作答案存 attempts（`subjective: true`，`correct: false`），不自动判分、不计正确率、不进错题范围；字数 = 去空白字符数；用时 = 本卡片打开后经过的秒数（页面内计时），不是整场用时。
+- 模拟考试只出摘要（已答 / 未答 / 用时），不自动判分、不出分数；环节到点自动进入下一环节（本环节已作答的题先记入答题记录）；退出模拟考试时本环节已作答的题也会先记入答题记录。
+- 导入器去重键 = 同一场内题号（`paperId::order`）；题号缺失（默认 0）时退回按题干去重。重复导入同一文件仍全部跳过。
+
+### 构建与测试（worktree 内实测）
+- `npm run build`：通过。precache 20 个条目（795.57 KiB）；主 chunk 体积警告是 P1 已有的问题。
+- `npm run test:fsrs`：通过，FSRS-7 间隔与 T0 一致。
+- 构建时修过两个小错：Practice.tsx 曾一度误删初始 refresh 的 useEffect 与 resetCard，已补回；tsc 曾报 `current` / `isObjective` 重复声明，已删旧的一处。
+
+### Dexie 迁移实测（同一浏览器 profile、同一端口 4177，先旧版后 P6 版，最终构建重验过一次）
+先用 main 35c83b4 的构建（临时 worktree `/tmp/topik-master-2027-old`，detached HEAD，已留）打开同一 profile：加载种子（库内共 1172 条），复习页打 3 张分，导入 P5 夹具（新增试卷 2 场、新增题目 5 道），快照：词汇 1172、复习 3、题目 5、试卷 2、答题 0、Dexie 底层版本号 20（声明版本 2 ×10）。然后停掉旧版服务、起 P6 构建（同一端口、同一 profile），先清掉该 origin 的 cache_storage + service_workers（不动 IndexedDB 与 localStorage，P5 的教训），确认首页版本说明翻到 P6 后逐项核对：Dexie 底层版本号 30（声明版本 3）、词汇 1172、复习 3、题目 5、试卷 2、答题 0——**旧数据一条不少**；5 道旧题目记录迁移后都有 `audio` 字段且值为空字符串；再导入 P6 夹具：新增试卷 1 场、新增题目 5 道、拒绝 1 条（timeLimit 为 0 的题），带 `audio: "test-tone.mp3"` 的听力题与 `timeLimit: 1` 的阅读题正确入库。迁移在最终构建（含去重键修与写作卡片修）上重验一次，8/8 通过。
+
+### 真机浏览器实测（npm run preview，端口 4178，全新 Chrome profile）
+测试夹具在 `~/workspace/p6-skills/fixture-p6.json`（不进仓库）：试卷“P6 测试卷”（来源“P6 测试夹具”，状态待核实），题目 5 道（1 道带 `audio: "test-tone.mp3"` 的听力题、1 道无 audio 的听力题、1 道 `timeLimit: 1` 的阅读题、1 道无 timeLimit 的阅读题、1 道写作题），另有 1 道 `timeLimit: 0` 的无效项。测试音频 `~/workspace/p6-skills/test-tone.mp3`（ffmpeg 生成的 3 秒 440Hz 正弦提示音，12KB，明确标注测试音频、不是真题音频；不进仓库）。验收驱动 `/tmp/cdp-p6-acc.mjs`，26/26 通过：
+
+| 验收项 | 实测结果 |
+|---|---|
+| 导入 P6 夹具 | 新增试卷 1 场、新增题目 5 道、拒绝 1 条（timeLimit 为 0） |
+| 听力题显示音频引用 | Q1 显示“音频引用：test-tone.mp3” |
+| 听力音频真实加载并播放 | 选文件后 `<audio>` 出现；`audio.play()` 后 readyState 4、paused false、currentTime 0.97 秒前进中、playing 事件触发、duration 正好 3 秒（测试提示音）；状态文案“正在播放” |
+| 听力题答题后显示解析 | 选 A（提示音 440Hz）提交后显示“答对了”+ 解析“测试夹具：音频为 3 秒 440Hz 正弦提示音。” |
+| 无音频的听力题 | Q2 明确显示“未导入音频”，不静默失败；答题后仍可正常提交 |
+| 阅读题倒计时 | Q3（timeLimit 1）显示“剩余 01:00”并逐秒递减，60 秒到点显示“时间到！请提交答案（练习模式不锁题）”；提交后仍可答题（不锁题） |
+| 无 timeLimit 的阅读题 | Q4 显示“本题未设限时” |
+| 写作题字数与用时 | 输入“안녕하세요 저는 학생입니다”后显示“字数：12（不计空格） · 本次用时：00:02” |
+| 写作自查清单 | 5 项可逐项打勾（checked=5），存 localStorage（key `topik-master-writing-checklist-<questionId>`） |
+| 写作保存 | 点“保存答案”后显示“已保存：答案与用时已记录，刷新后还在。”；attempts 里多一条 subjective=true、writingSeconds=2、全文正确的记录 |
+| 正确率统计排除主观题 | 客观 4 题全对 + 写作 1 题后，练习页显示“已答 4 次 · 正确率 100%（答对 4 / 4）”——写作不计 |
+| 写作答案刷新后还在 | 退出练习、重进同一场、重新答完 Q1–Q4 到 Q5，textarea 里仍是“안녕하세요 저는 학생입니다” |
+| 模拟考试默认时长 | 听力 60 / 阅读 70 / 写作 50 分钟（页内写明按 TOPIK II 公开结构，实际以当年准考证为准） |
+| 模拟考试时长可调 | 改成各 1 分钟后 localStorage `topik-master-mock-durations` 为 `{listening:1, reading:1, writing:1}` |
+| 模拟考试听力环节到点自动推进 | 听力环节 1 分钟到点自动进入阅读环节，提示“时间到，已自动进入下一环节。” |
+| 模拟考试结束页成绩摘要 | 听力已答 2 未答 0、用时 0 分 59 秒；阅读已答 2 未答 0、用时 0 分钟（立即交卷）；写作已答 1 未答 0、用时 0 分 2 秒；合计已答 5 未答 0、用时 1 分 1 秒；页内无“得分 / 分数 / 正确率”字样，不自动判分 |
+| 模拟考试时长恢复默认 | 改回后 localStorage 为 `{listening:60, reading:70, writing:50}` |
+
+验收中发现并修掉一个真 bug（#13）：重进写作题时 textarea 是空的——`WritingCard` 的初始文案同步 effect 只依赖 `question.id`，而最新一次保存的答案是异步读到的，读到时 effect 不再跑，输入框 stays 空（答案其实已在 attempts 里）。已修：`initialText` 变化时再同步一次，但用户已在本卡片打过字就不覆盖（`touchedRef`）。修后重测，刷新/重进后答案正常回填（见上表）。
+
+截图（`~/workspace/p6-skills/`，不进仓库，逐张看过）：`listening-playback.png`（桌面，听力播放页：播放器 0:01/0:03 播放中、“正在播放”、音频引用与选项都在）、`mock-exam-desktop-1280.png`（桌面，模拟考试写作环节：环节 3/3、剩余 00:59、写作卡片与自查清单）、`mock-exam-mobile-390.png`（手机 390×844，模拟考试听力环节：环节 1/3、剩余 60:00、音频引用块，无横向溢出）。
+
+### 已知不足（老实写）
+- **本机 headless Chrome 只能验证 audio 元素真实加载并触发播放事件、currentTime 前进，没听到声音**（与 P3 发音同款限制）：是否真的出声，需她在 iPhone 上复测（或有声环境下复测）。
+- 60 / 70 分钟的环节时长没有真实等过（验收把各环节调到 1 分钟实测自动推进与摘要，默认值只核对了数字正确）；25 分钟专注轮、iPhone 后台计时未实测（P4 遗留）；未在 iPhone / Windows 真机上测（与 P1–P5 同款待办）。
+- 验收第一轮阅读计时到点曾一次没出现（90 秒内没等到“时间到”），单独探针重测时倒计时 01:00 → 00:00 正常走完、60 秒整出现“时间到”；判定为当时并行转录任务占满机器导致的偶发卡顿，不是应用 bug（倒计时按时间戳算剩余，计时器晚 tick 也会一次跳到正确剩余值）。
+- 模拟考试里词汇 / 语法 / 其他题型的题不计入环节（页内明示数量）；真实 TOPIK II 卷只有听力/阅读/写作三种题型，不受影响。
+- 驱动教训（给以后验收留的）：CDP `DOM.setFileInputFiles` 在本页上不稳定（全新 profile 时 files.length 一直为 0、复用 profile 时又能成；且 `handleAudioFile` 处理完会主动清空 input value，所以 files.length 本来就不能当成功信号）；改用页内 DataTransfer（真实文件字节 base64 → File → input.files + change 事件）才稳定。另：`Runtime.evaluate` 用 `returnByValue: true` 时别返回 DOM 节点（会报 `Object reference chain is too long`，waitFor 会吞掉它一直超时）；`Page.navigate` 直跳 127.0.0.1 会被本地网络访问检查拦成 `chrome-error://chromewebdata/`（清掉 SW 缓存后尤其），可靠路线是 file:// 跳转页 `location.replace`（缓存破坏参数直接写进跳转目标）。
