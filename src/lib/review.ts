@@ -55,6 +55,10 @@ export async function getDueList(now: Date = new Date()): Promise<DueItem[]> {
   const fresh: DueItem[] = []
   for (const vocab of allVocab) {
     if (vocab.id === undefined) continue
+    // P4 修复（自测词串位）：T0 自测会在首页挂载时先写 3 条测试词再删，
+    // 窗口期只有几毫秒，但快速点进复习页正好撞上时测试词会短暂进到期队列
+    // 甚至被打分。测试词（isTestData）永远不进复习队列，SelfTest 本身不动。
+    if (vocab.isTestData) continue
     const last = latest.get(vocab.id)
     if (!last) {
       fresh.push({ vocab, dueAt: now, isNew: true, lastGrade: null })
@@ -123,10 +127,12 @@ export async function previewGrades(
   return previewSrsCard(card, now)
 }
 
-/** 随机抽词：从已导入的全部词条中随机抽一条，排除已抽过的 id；抽完返回 null。 */
+/** 随机抽词：从已导入的全部词条中随机抽一条，排除已抽过的 id；抽完返回 null。测试词（isTestData）永远不进抽词池（与到期队列同一修法，P4）。 */
 export async function getRandomVocab(excludeIds: number[]): Promise<VocabEntry | null> {
   const all = await getAllVocab()
-  const pool = all.filter((v) => v.id !== undefined && !excludeIds.includes(v.id))
+  const pool = all.filter(
+    (v) => v.id !== undefined && !v.isTestData && !excludeIds.includes(v.id),
+  )
   if (pool.length === 0) return null
   return pool[Math.floor(Math.random() * pool.length)]
 }
