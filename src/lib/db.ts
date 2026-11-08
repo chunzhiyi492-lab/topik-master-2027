@@ -408,6 +408,238 @@ export async function addAttempt(rec: Omit<Attempt, 'id'>): Promise<number> {
   return db.attempts.add(rec)
 }
 
+/** 全部答题记录（按 id 升序）。 */
+export async function getAllAttempts(): Promise<Attempt[]> {
+  return db.attempts.toArray()
+}
+
+/** 答题记录总数。 */
+export async function countAttempts(): Promise<number> {
+  return db.attempts.count()
+}
+
+/** 某道题最新一次答题记录（按 answeredAt、再按 id 取最大）；没答过返回 undefined。 */
+export async function getLatestAttemptByQuestion(questionId: number): Promise<Attempt | undefined> {
+  const list = await db.attempts.where('questionId').equals(questionId).toArray()
+  if (list.length === 0) return undefined
+  return list.reduce((a, b) =>
+    b.answeredAt.getTime() > a.answeredAt.getTime() ||
+    (b.answeredAt.getTime() === a.answeredAt.getTime() && (b.id ?? 0) > (a.id ?? 0))
+      ? b
+      : a,
+  )
+}
+
+// ---- P7 新增：本地备份与恢复（#23）----
+// 备份格式（单个 JSON 文件，本地下载/导入，不上传任何地方）：
+// { app: 'topik-master-2027', formatVersion: 1, dexieVersion: 3, exportedAt,
+//   vocab, reviews, daily_stats, questions, papers, attempts }
+// 口径（P7 定死）：
+// - 导出 = 整库六类数据全量快照（含 Dexie 版本号与导出时间）；恢复 = 先校验、再一次性
+//   覆盖本地全部数据（恢复前页面要求二次确认）；校验不过整份拒绝、不写半份数据。
+// - JSON 里的日期是字符串，恢复时必须转回 Date，否则后续 getTime() 会坏；
+//   日期无效的条目整份拒绝并报错，不静默跳过。
+// - 备份文件只认本应用（app 字段）与 formatVersion 1；版本不符拒绝并报错。
+
+export const BACKUP_FORMAT_VERSION = 1
+export const BACKUP_APP = 'topik-master-2027'
+
+export interface BackupData {
+  app: string
+  formatVersion: number
+  dexieVersion: number
+  exportedAt: string
+  vocab: VocabEntry[]
+  reviews: ReviewRecord[]
+  daily_stats: DailyStat[]
+  questions: Question[]
+  papers: Paper[]
+  attempts: Attempt[]
+}
+
+export interface BackupPreview {
+  exportedAt: string
+  dexieVersion: number
+  counts: {
+    vocab: number
+    reviews: number
+    daily_stats: number
+    questions: number
+    papers: number
+    attempts: number
+  }
+}
+
+function asDate(value: unknown, label: string): Date {
+  const d = value instanceof Date ? value : new Date(value as string)
+  if (Number.isNaN(d.getTime())) throw new Error(`备份文件里${label}的日期无效`)
+  return d
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+/**
+ * 解析并校验备份文件：格式、应用名、版本号、六个数组、关键字段类型与日期。
+ * 通过则返回规范化后的完整数据（日期已转回 Date）与预览计数；不过则抛错（写明原因）。
+ * 本函数不写库，可先给用户看“备份含多少条”再确认恢复。
+ */
+export function parseBackupJSON(jsonText: string): { data: BackupData; preview: BackupPreview } {
+  let raw: unknown
+  try {
+    raw = JSON.parse(jsonText)
+  } catch {
+    throw new Error('不是有效的 JSON 文件')
+  }
+  if (!isRecord(raw)) {
+    throw new Error('备份文件结构不对：顶层应为对象')
+  }
+  if (raw.app !== BACKUP_APP) {
+    throw new Error('不是本应用的备份文件（app 字段不符），已拒绝')
+  }
+  if (raw.formatVersion !== BACKUP_FORMAT_VERSION) {
+    throw new Error(
+      `备份格式版本不受支持：文件是 formatVersion ${String(raw.formatVersion)}，本应用只认 ${BACKUP_FORMAT_VERSION}，已拒绝`,
+    )
+  }
+  const arrays: (keyof BackupData)[] = ['vocab', 'reviews', 'daily_stats', 'questions', 'papers', 'attempts']
+  for (const key of arrays) {
+    if (!Array.isArray(raw[key])) {
+      throw new Error(`备份文件结构不对：缺少 ${key} 数组，已拒绝`)
+    }
+  }
+  const vocab = (raw.vocab as unknown[]).map((v, i) => {
+    if (!isRecord(v) || typeof v.ko !== 'string' || v.ko.trim() === '') {
+      throw new Error(`备份文件里第 ${i + 1} 条词汇缺 ko（韩文），已拒绝`)
+    }
+    return v as unknown as VocabEntry
+  })
+  const reviews = (raw.reviews as unknown[]).map((r, i) => {
+    if (!isRecord(r) || typeof r.vocabId !== 'number') {
+      throw new Error(`备份文件里第 ${i + 1} 条复习记录缺 vocabId，已拒绝`)
+    }
+    return {
+      ...(r as unknown as ReviewRecord),
+      reviewedAt: asDate(r.reviewedAt, `第 ${i + 1} 条复习记录的 reviewedAt`),
+      dueAt: asDate(r.dueAt, `第 ${i + 1} 条复习记录的 dueAt`),
+    }
+  })
+  const daily_stats = (raw.daily_stats as unknown[]).map((s, i) => {
+    if (!isRecord(s) || typeof s.date !== 'string') {
+      throw new Error(`备份文件里第 ${i + 1} 条统计缺 date，已拒绝`)
+    }
+    return s as unknown as DailyStat
+  })
+  const questions = (raw.questions as unknown[]).map((q, i) => {
+    if (!isRecord(q) || typeof q.stem !== 'string' || q.stem.trim() === '') {
+      throw new Error(`备份文件里第 ${i + 1} 道题缺 stem（题干），已拒绝`)
+    }
+    if (typeof q.source !== 'string' || q.source.trim() === '') {
+      throw new Error(`备份文件里第 ${i + 1} 道题缺 source（来源），已拒绝`)
+    }
+    if (!QUESTION_TYPES.includes(q.qtype as QuestionType)) {
+      throw new Error(`备份文件里第 ${i + 1} 道题 qtype（题型）不在允许范围，已拒绝`)
+    }
+    return q as unknown as Question
+  })
+  const papers = (raw.papers as unknown[]).map((p, i) => {
+    if (!isRecord(p) || typeof p.title !== 'string' || p.title.trim() === '') {
+      throw new Error(`备份文件里第 ${i + 1} 张试卷缺 title，已拒绝`)
+    }
+    return p as unknown as Paper
+  })
+  const attempts = (raw.attempts as unknown[]).map((a, i) => {
+    if (!isRecord(a) || typeof a.questionId !== 'number') {
+      throw new Error(`备份文件里第 ${i + 1} 条答题记录缺 questionId，已拒绝`)
+    }
+    return {
+      ...(a as unknown as Attempt),
+      answeredAt: asDate(a.answeredAt, `第 ${i + 1} 条答题记录的 answeredAt`),
+    }
+  })
+  const data: BackupData = {
+    app: BACKUP_APP,
+    formatVersion: BACKUP_FORMAT_VERSION,
+    dexieVersion: typeof raw.dexieVersion === 'number' ? raw.dexieVersion : 3,
+    exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
+    vocab,
+    reviews,
+    daily_stats,
+    questions,
+    papers,
+    attempts,
+  }
+  return {
+    data,
+    preview: {
+      exportedAt: data.exportedAt,
+      dexieVersion: data.dexieVersion,
+      counts: {
+        vocab: vocab.length,
+        reviews: reviews.length,
+        daily_stats: daily_stats.length,
+        questions: questions.length,
+        papers: papers.length,
+        attempts: attempts.length,
+      },
+    },
+  }
+}
+
+/** 整库导出为备份 JSON 字符串（六类数据全量 + 元数据）。 */
+export async function exportBackupJSON(): Promise<string> {
+  const [vocab, reviews, daily_stats, questions, papers, attempts] = await Promise.all([
+    db.vocab.toArray(),
+    db.reviews.toArray(),
+    db.daily_stats.toArray(),
+    db.questions.toArray(),
+    db.papers.toArray(),
+    db.attempts.toArray(),
+  ])
+  const data: BackupData = {
+    app: BACKUP_APP,
+    formatVersion: BACKUP_FORMAT_VERSION,
+    dexieVersion: 3,
+    exportedAt: new Date().toISOString(),
+    vocab,
+    reviews,
+    daily_stats,
+    questions,
+    papers,
+    attempts,
+  }
+  return JSON.stringify(data, null, 2)
+}
+
+/**
+ * 恢复备份：先校验（parseBackupJSON），再在同一个事务里清空六张表并一次性写入。
+ * 校验失败抛错、不动本地数据；写入失败时事务回滚（Dexie 事务内任一步失败整批不落库）。
+ * 注意：恢复会覆盖本地全部数据，调用前必须在页面上向用户二次确认并展示预览计数。
+ */
+export async function importBackupJSON(jsonText: string): Promise<BackupPreview> {
+  const { data, preview } = parseBackupJSON(jsonText)
+  await db.transaction(
+    'rw',
+    [db.vocab, db.reviews, db.daily_stats, db.questions, db.papers, db.attempts],
+    async () => {
+      await db.vocab.clear()
+      await db.reviews.clear()
+      await db.daily_stats.clear()
+      await db.questions.clear()
+      await db.papers.clear()
+      await db.attempts.clear()
+      await db.vocab.bulkAdd(data.vocab)
+      await db.reviews.bulkAdd(data.reviews)
+      await db.daily_stats.bulkAdd(data.daily_stats)
+      await db.questions.bulkAdd(data.questions)
+      await db.papers.bulkAdd(data.papers)
+      await db.attempts.bulkAdd(data.attempts)
+    },
+  )
+  return preview
+}
+
 /** 只清空题库（questions / papers / attempts），不碰词汇、复习、统计数据。 */
 export async function clearQuestionBank(): Promise<void> {
   await db.transaction('rw', db.questions, db.papers, db.attempts, async () => {
