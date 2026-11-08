@@ -5,10 +5,13 @@ import {
   getAllVocab,
   getFilterOptions,
   getUnlearnedVocab,
+  getVocabByMastery,
   searchVocab,
   toggleFavorite,
   type VocabEntry,
 } from '../lib/db'
+import { isSpeechSupported, listKoreanVoices, speakKorean } from '../lib/speech'
+import type { GradeLabel } from '../lib/srs'
 import {
   importVocabEntries,
   loadSeedVocabulary,
@@ -23,11 +26,20 @@ import {
 // 铁律：全部种子只进待核实池（加载器强制 status=待核实）；无中文释义的词显示“待补”，不编造。
 
 const DAILY_TARGET_KEY = 'topik-master-p1-daily-target'
+const SPEECH_RATE_KEY = 'topik-master-speech-rate'
 const LIST_LIMIT = 200
+
+const MASTERY_GRADES: GradeLabel[] = ['不认识', '模糊', '认识', '很熟']
 
 function loadDailyTarget(): number {
   const raw = Number(window.localStorage.getItem(DAILY_TARGET_KEY) ?? '')
   return Number.isInteger(raw) && raw >= 1 && raw <= 200 ? raw : 20
+}
+
+/** 语速 0.5–1.5，默认 0.9（与 speech.ts 一致），存在 localStorage。 */
+function loadSpeechRate(): number {
+  const raw = Number(window.localStorage.getItem(SPEECH_RATE_KEY) ?? '')
+  return raw >= 0.5 && raw <= 1.5 ? raw : 0.9
 }
 
 export default function Vocab({ onBack }: { onBack: () => void }) {
@@ -47,6 +59,12 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
   const [pos, setPos] = useState('')
   const [status, setStatus] = useState('')
   const [favoriteOnly, setFavoriteOnly] = useState(false)
+  const [mastery, setMastery] = useState('')
+  const [masteryIds, setMasteryIds] = useState<Set<number>>(new Set())
+  const [speechRate, setSpeechRate] = useState<number>(() => loadSpeechRate())
+  const [speakingId, setSpeakingId] = useState<number | null>(null)
+  const [voiceNote, setVoiceNote] = useState('')
+  const [speakError, setSpeakError] = useState('')
   const [pendingSource, setPendingSource] = useState('')
   const [target, setTarget] = useState<number>(() => loadDailyTarget())
   const [todayList, setTodayList] = useState<VocabEntry[]>([])
@@ -72,7 +90,8 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
         (!level || v.source_level === level) &&
         (!pos || v.pos === pos) &&
         (!status || v.status === status) &&
-        (!favoriteOnly || v.favorite),
+        (!favoriteOnly || v.favorite) &&
+        (!mastery || masteryIds.has(v.id ?? -1)),
     )
     setListTotal(filtered.length)
     setList(filtered.slice(0, LIST_LIMIT))
@@ -98,7 +117,29 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     void refreshList()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyword, lesson, level, pos, status, favoriteOnly])
+  }, [keyword, lesson, level, pos, status, favoriteOnly, masteryIds])
+
+  // 发音：进页时查一次本机韩语语音；语音列表晚到时 voiceschanged 再查一次。
+  // 无韩语语音不静默失败，voiceNote 原样显示原因。
+  useEffect(() => {
+    const check = () => {
+      if (!isSpeechSupported()) {
+        setVoiceNote('当前浏览器不支持 speechSynthesis，发音不可用。')
+        return
+      }
+      const { voices, reason } = listKoreanVoices()
+      setVoiceNote(
+        voices.length > 0
+          ? `已找到 ${voices.length} 个韩语语音：${voices.map((v) => v.name).join('、')}`
+          : reason,
+      )
+    }
+    check()
+    const synth = window.speechSynthesis
+    synth?.addEventListener('voiceschanged', check)
+    return () => synth?.removeEventListener('voiceschanged', check)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLoadSeeds = async () => {
     setLoadingSeeds(true)
@@ -144,6 +185,53 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
     if (entry.id === undefined) return
     await toggleFavorite(entry.id, !entry.favorite)
     await refreshList()
+  }
+
+  // 掌握度筛选（P2 留给 P3 的收尾）：按最新一次打分档位筛；“未学”= 从未打过分。
+  const handleMasteryChange = async (value: string) => {
+    setMastery(value)
+    if (!value) {
+      setMasteryIds(new Set())
+      return
+    }
+    const list =
+      value === '未学'
+        ? await getUnlearnedVocab(10000)
+        : await getVocabByMastery(value as GradeLabel)
+    setMasteryIds(
+      new Set(list.map((v) => v.id).filter((id): id is number => id !== undefined)),
+    )
+  }
+
+  // 发音：调 speech.ts 的 speakKorean（ko-KR + 语速）；播完恢复按钮。
+  // speechSynthesis.speaking 轮询判断播完，无语音时 speakKorean 仍会尝试，
+  // 但 voiceNote 已提前把原因告诉用户。
+  const handleSpeak = (entry: VocabEntry) => {
+    if (entry.id === undefined) return
+    const res = speakKorean(entry.ko, { rate: speechRate })
+    if (!res.ok) {
+      setSpeakError(`发音失败：${res.reason}`)
+      return
+    }
+    setSpeakError('')
+    setSpeakingId(entry.id)
+    const timer = window.setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        window.clearInterval(timer)
+        setSpeakingId(null)
+      }
+    }, 200)
+    window.setTimeout(() => {
+      window.clearInterval(timer)
+      setSpeakingId(null)
+    }, 15000)
+  }
+
+  const handleRateChange = (value: string) => {
+    const r = Number(value)
+    if (Number.isNaN(r) || r < 0.5 || r > 1.5) return
+    setSpeechRate(r)
+    window.localStorage.setItem(SPEECH_RATE_KEY, String(r))
   }
 
   const pendingList = pendingSource
@@ -352,6 +440,18 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
           </select>
         </label>{' '}
         <label>
+          掌握度：
+          <select value={mastery} onChange={(e) => void handleMasteryChange(e.target.value)}>
+            <option value="">全部</option>
+            <option value="未学">未学（从未打过分）</option>
+            {MASTERY_GRADES.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </label>{' '}
+        <label>
           <input
             type="checkbox"
             checked={favoriteOnly}
@@ -360,6 +460,24 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
           仅看收藏
         </label>
       </p>
+      <h3>发音（#6）</h3>
+      <p>
+        <label>
+          语速：
+          <input
+            type="range"
+            min={0.5}
+            max={1.5}
+            step={0.1}
+            value={speechRate}
+            onChange={(e) => handleRateChange(e.target.value)}
+            style={{ verticalAlign: 'middle' }}
+          />{' '}
+          {speechRate.toFixed(1)}x（0.5 最慢，1.5 最快）
+        </label>
+      </p>
+      <p>语音：{voiceNote}</p>
+      {speakError && <p className="fail">{speakError}</p>}
       <p>
         共 <strong>{listTotal}</strong> 条
         {listTotal > LIST_LIMIT && `，仅显示前 ${LIST_LIMIT} 条（请缩小筛选范围）`}。
@@ -377,6 +495,7 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
               <th>课次</th>
               <th>状态</th>
               <th>收藏</th>
+              <th>发音</th>
             </tr>
           </thead>
           <tbody>
@@ -398,6 +517,16 @@ export default function Vocab({ onBack }: { onBack: () => void }) {
                     aria-label={v.favorite ? '取消收藏' : '收藏'}
                   >
                     {v.favorite ? '★' : '☆'}
+                  </button>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => handleSpeak(v)}
+                    aria-label={`朗读 ${v.ko}`}
+                  >
+                    {speakingId === v.id ? '朗读中…' : '🔊 发音'}
                   </button>
                 </td>
               </tr>
