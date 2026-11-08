@@ -7,6 +7,8 @@ import Plan from './pages/Plan'
 import Focus from './pages/Focus'
 import Practice from './pages/Practice'
 import MockExam from './pages/MockExam'
+import WrongQuestions from './pages/WrongQuestions'
+import Settings from './pages/Settings'
 import MetalPrototype from './pages/MetalPrototype'
 import CloverDreamcore from './pages/CloverDreamcore'
 
@@ -24,6 +26,8 @@ function App() {
   const [showFocus, setShowFocus] = useState(false)
   const [showPractice, setShowPractice] = useState(false)
   const [showMockExam, setShowMockExam] = useState(false)
+  const [showWrongQuestions, setShowWrongQuestions] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [showMetal, setShowMetal] = useState(
     () => new URLSearchParams(window.location.search).get('metal') === '1',
   )
@@ -59,6 +63,14 @@ function App() {
     return <MockExam onBack={() => setShowMockExam(false)} />
   }
 
+  if (showWrongQuestions) {
+    return <WrongQuestions onBack={() => setShowWrongQuestions(false)} />
+  }
+
+  if (showSettings) {
+    return <Settings onBack={() => setShowSettings(false)} />
+  }
+
   if (showMetal) {
     return <MetalPrototype onBack={() => setShowMetal(false)} />
   }
@@ -76,10 +88,11 @@ function App() {
         发音用浏览器自带韩语语音，复习用 FSRS 算法。
       </p>
       <div className="note">
-        当前版本：P6 听说读写。词汇导入、搜索筛选、每日背词计划、FSRS 复习、随机抽词、
+        当前版本：P7 考试闭环与收尾。词汇导入、搜索筛选、每日背词计划、FSRS 复习、随机抽词、
         掌握度标记、收藏与错词本、词条发音、学习统计、打卡日历、每日学习计划、番茄钟、
-        TOPIK 目标进度、试题系统模型与导入器、听力音频、阅读计时、写作练习、模拟考试计时已开发；
-        自动计分在 P7 接上。题库为空、等官方真题本地导入。
+        TOPIK 目标进度、试题系统模型与导入器、听力音频、阅读计时、写作练习、模拟考试计时、
+        答题卡与自动计分、错题复练、本地备份与恢复、离线使用与安装已开发；24 项固定功能全部落地。
+        题库为空、等官方真题本地导入。
         词汇分级规则：不标“官方 TOPIK X 级”，只用 NIKL-A/B/C、TOPIK-초급/중급、课程-X级参考三类来源标注。
         全部种子只进待核实池；无中文释义的词显示“待补”，不编造。
       </div>
@@ -104,6 +117,12 @@ function App() {
         </button>{' '}
         <button type="button" onClick={() => setShowMockExam(true)}>
           模拟考试
+        </button>{' '}
+        <button type="button" onClick={() => setShowWrongQuestions(true)}>
+          错题复练
+        </button>{' '}
+        <button type="button" onClick={() => setShowSettings(true)}>
+          设置（备份 / 离线与安装）
         </button>{' '}
         <button type="button" onClick={() => setShowMetal(true)}>
           金属风原型（预览）
