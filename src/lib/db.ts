@@ -96,6 +96,11 @@ export interface Question {
   paperId?: number
   /** 卷内题序（导入时缺省按导入顺序） */
   order: number
+  /** P6：听力音频引用——音频文件名（如“84회 듣기 01.mp3”），只记引用，不存音频文件本身；
+   * 音频文件由用户保存在本机，练习时重新选择文件播放；空字符串/缺省 = 未导入音频。 */
+  audio?: string
+  /** P6：限时（分钟，正整数）；缺省 = 本题未设限时。阅读题用；模拟考试用各环节时长，不读本题限时。 */
+  timeLimit?: number
 }
 
 export interface Paper {
@@ -119,11 +124,16 @@ export interface Attempt {
   questionId: number
   /** 答题时所在的试卷（随机抽题留空） */
   paperId?: number
-  /** 选中的选项文本 */
+  /** 选中的选项文本；写作题存所写全文 */
   selectedAnswer: string
   /** 是否答对（主观题不自动判分、不写 attempts） */
   correct: boolean
   answeredAt: Date
+  /** P6：主观题（写作）标记——写作答案存 attempts 但不自动判分、不计入正确率、
+   * 不进错题范围；客观题缺省 false。 */
+  subjective?: boolean
+  /** P6：写作所用秒数（仅主观题写）。 */
+  writingSeconds?: number
 }
 
 class TopikDB extends Dexie {
@@ -151,6 +161,27 @@ class TopikDB extends Dexie {
       papers: '++id, level, status, title',
       attempts: '++id, questionId, paperId, answeredAt, correct',
     })
+    // P6：version 3 只给 questions 表加 audio / timeLimit 两个非索引字段。
+    // Dexie 存整条对象，非索引字段不用改索引声明；升级钩子只做归一化——
+    // 旧记录缺 audio 的补空字符串（= 未导入音频），timeLimit 缺省即“未设限时”；
+    // 旧数据（词汇/复习/统计/题目/答题）一条不丢，迁移实测见 ACCEPTANCE.md P6 一节。
+    this.version(3)
+      .stores({
+        vocab: '++id, ko, pos, source, source_level, yonsei_lesson, status, favorite',
+        reviews: '++id, vocabId, reviewedAt, dueAt',
+        daily_stats: '++id, date',
+        questions: '++id, paperId, qtype, difficulty, status, source',
+        papers: '++id, level, status, title',
+        attempts: '++id, questionId, paperId, answeredAt, correct',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('questions')
+          .toCollection()
+          .modify((q: Record<string, unknown>) => {
+            if (q.audio === undefined || q.audio === null) q.audio = ''
+          })
+      })
   }
 }
 
@@ -334,6 +365,11 @@ export async function getQuestionById(id: number): Promise<Question | undefined>
   return db.questions.get(id)
 }
 
+/** P6：把用户本次选择的音频文件名记为该题的音频引用（只记文件名，不存音频文件本身）。 */
+export async function updateQuestionAudio(id: number, fileName: string): Promise<void> {
+  await db.questions.update(id, { audio: fileName })
+}
+
 /** 某道题的全部答题记录（按时间升序）。 */
 export async function getAttemptsByQuestion(questionId: number): Promise<Attempt[]> {
   const list = await db.attempts.where('questionId').equals(questionId).toArray()
@@ -345,12 +381,27 @@ export async function getWrongQuestionIds(): Promise<number[]> {
   const all = await db.attempts.toArray()
   const latest = new Map<number, Attempt>()
   for (const a of all) {
+    // P6：写作等主观题答题（subjective）不自动判分，不进错题范围。
+    if (a.subjective) continue
     const cur = latest.get(a.questionId)
     if (!cur || a.answeredAt.getTime() >= cur.answeredAt.getTime()) {
       latest.set(a.questionId, a)
     }
   }
   return [...latest.entries()].filter(([, a]) => !a.correct).map(([id]) => id)
+}
+
+/** 某道写作题最新一次保存的答案（主观题答题记录）；没写过返回 undefined。 */
+export async function getLatestWritingAttempt(questionId: number): Promise<Attempt | undefined> {
+  const list = await db.attempts
+    .where('questionId')
+    .equals(questionId)
+    .filter((a) => a.subjective === true)
+    .toArray()
+  if (list.length === 0) return undefined
+  return list.reduce((a, b) =>
+    b.answeredAt.getTime() >= a.answeredAt.getTime() ? b : a,
+  )
 }
 
 export async function addAttempt(rec: Omit<Attempt, 'id'>): Promise<number> {
@@ -492,6 +543,29 @@ export async function importQuestionBank(jsonText: string): Promise<QuestionBank
       errors.push(`${label}：主观题（options 为空）不应填 answerIndex，已拒绝`)
       return
     }
+    // P6：听力音频引用（audio，字符串文件名；可空）与限时（timeLimit，正整数分钟；可空）。
+    // 只记引用，不存音频文件本身；timeLimit 非正整数拒绝入库。
+    let audio = ''
+    if (r.audio !== undefined && r.audio !== null) {
+      if (typeof r.audio !== 'string') {
+        errors.push(`${label}：audio（音频引用）不是字符串，已拒绝`)
+        return
+      }
+      audio = (r.audio as string).trim()
+    }
+    let timeLimit: number | undefined
+    if (r.timeLimit !== undefined && r.timeLimit !== null) {
+      if (
+        typeof r.timeLimit !== 'number' ||
+        !Number.isInteger(r.timeLimit) ||
+        r.timeLimit <= 0 ||
+        r.timeLimit > 600
+      ) {
+        errors.push(`${label}：timeLimit（限时分钟）不是 1–600 的正整数，已拒绝`)
+        return
+      }
+      timeLimit = r.timeLimit
+    }
     validQuestions.push({
       stem: (r.stem as string).trim(),
       options,
@@ -504,6 +578,8 @@ export async function importQuestionBank(jsonText: string): Promise<QuestionBank
       difficulty: isNonEmptyString(r.difficulty) ? (r.difficulty as string).trim() : '中',
       paperTitle: asOptionalString(r.paperTitle),
       order: typeof r.order === 'number' ? r.order : 0,
+      audio,
+      timeLimit,
     })
   })
 
@@ -527,7 +603,12 @@ export async function importQuestionBank(jsonText: string): Promise<QuestionBank
       papersAdded += 1
     }
     const existingQuestions = await db.questions.toArray()
-    const seen = new Set(existingQuestions.map((q) => `${q.paperId ?? ''}::${q.stem}`))
+    // 去重键：同一场内按题号（order）去重。P5 用 paperId::stem 会把同组题误判为重复——
+    // 102 回 TOPIK I 听力转录实测：同组题题干相同（如“다음을 듣고…”），初版只进了 13/30。
+    // order 缺失（默认 0）时退回按题干去重，避免两道无题号的题互相顶掉。
+    const dedupeKey = (paperId: number | undefined, order: number, stem: string) =>
+      order > 0 ? `${paperId ?? ''}::${order}` : `${paperId ?? ''}::stem::${stem}`
+    const seen = new Set(existingQuestions.map((q) => dedupeKey(q.paperId, q.order, q.stem)))
     for (const q of validQuestions) {
       let paperId: number | undefined
       if (q.paperTitle) {
@@ -537,7 +618,7 @@ export async function importQuestionBank(jsonText: string): Promise<QuestionBank
           continue
         }
       }
-      const key = `${paperId ?? ''}::${q.stem}`
+      const key = dedupeKey(paperId, q.order, q.stem)
       if (seen.has(key)) {
         questionsSkipped += 1
         continue
