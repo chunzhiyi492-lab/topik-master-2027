@@ -15,9 +15,13 @@ import {
   type Question,
   type QuestionBankImportResult,
 } from '../lib/db'
+import { scoreItems, type ScoredItem, type ScoreSummary } from '../lib/scoring'
+import AnswerCard, { type AnswerCardState } from './AnswerCard'
 
 // TOPIK MASTER 2027 — 练习页（P5：#9 试卷练习、#17 题目解析与来源标记、#10 随机题目练习；
-// P6：#11 听力音频、#12 阅读计时、#13 写作练习）
+// P6：#11 听力音频、#12 阅读计时、#13 写作练习；
+// P7：#15 答题卡与自动计分（本次练习的答题卡 + 实时成绩 + 交卷成绩页）；#16 错题复练在
+// WrongQuestions.tsx（本页随机抽题保留“仅错题”范围））
 // 题库出厂是空的：首批题目来源已定为“官方真题本地导入”——用户从 topik.go.kr
 // 下载官方真题后发来，再做成导入格式；本阶段不编造任何题目、不写任何真题或
 // 自编题进仓库。本页只搭模型、导入器与练习流程。
@@ -335,6 +339,12 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   const [writingSaved, setWritingSaved] = useState(false)
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [timeUp, setTimeUp] = useState(false)
+  // P7（#15）：本次练习的作答记录（题 id → 本次作答状态），答题卡与成绩都从它算；
+  // 交卷后显示成绩页（showSummary）。退出/重练时清空。
+  const [sessionAnswers, setSessionAnswers] = useState<
+    Map<number, { selected: number | null; correct: boolean | null; submitted: boolean; subjectiveAnswered: boolean }>
+  >(new Map())
+  const [showSummary, setShowSummary] = useState(false)
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   const refresh = async () => {
@@ -362,6 +372,38 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   const current = sessionQuestions.length > 0 ? sessionQuestions[currentIdx] : null
   const isObjective = current !== null && current.options.length > 0
   const isWriting = current !== null && current.qtype === '写作' && !isObjective
+
+  // P7（#15）：本次练习的计分项与答题卡状态（都从 sessionAnswers 算，不读历史答题记录——
+  // 卡片只反映“本次练习”的已答/未答/对错；历史正确率在练习首页另有统计）。
+  const sessionItems: ScoredItem[] = sessionQuestions.map((q) => {
+    const a = sessionAnswers.get(q.id as number)
+    const objective = q.options.length > 0
+    return {
+      questionId: q.id as number,
+      qtype: q.qtype,
+      objective,
+      answered: objective ? (a?.submitted ?? false) : false,
+      correct: objective ? (a?.correct ?? false) : false,
+      subjectiveAnswered: !objective ? (a?.subjectiveAnswered ?? false) : false,
+    }
+  })
+  const sessionScore: ScoreSummary = scoreItems(sessionItems)
+  const cardStates: AnswerCardState[] = sessionItems.map((it) => {
+    if (!it.objective) return it.subjectiveAnswered ? 'subjective-answered' : 'subjective-unanswered'
+    if (!it.answered) return 'unanswered'
+    return it.correct ? 'correct' : 'wrong'
+  })
+
+  /** 跳到第 idx 道题，并把该题在本练习里的作答状态恢复进卡片（已答过的题显示结果与解析）。 */
+  const goToQuestion = (idx: number) => {
+    setCurrentIdx(idx)
+    const q = sessionQuestions[idx]
+    const a = q?.id !== undefined ? sessionAnswers.get(q.id) : undefined
+    setSelected(a?.selected ?? null)
+    setSubmitted(a?.submitted ?? false)
+    setLastCorrect(a?.correct ?? null)
+    setWritingSaved(a?.subjectiveAnswered ?? false)
+  }
 
   // P6：当前是写作题时，读最新一次保存的答案做初始文案（刷新后答案还在）。
   useEffect(() => {
@@ -418,6 +460,12 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setWritingSaved(false)
   }
 
+  /** P7：开一场新的练习（或退出）时清空本次作答记录与成绩页。 */
+  const resetSession = () => {
+    setSessionAnswers(new Map())
+    setShowSummary(false)
+  }
+
   const startPaper = async (paper: Paper) => {
     setError('')
     const qs = await getQuestionsByPaper(paper.id as number)
@@ -429,6 +477,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setSessionQuestions(qs)
     setCurrentIdx(0)
     setSessionMode('paper')
+    resetSession()
     resetCard()
   }
 
@@ -459,6 +508,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setSessionQuestions(drawn)
     setCurrentIdx(0)
     setSessionMode('random')
+    resetSession()
     resetCard()
     setRandomNote(`已抽 ${drawn.length} 道（题库符合筛选共 ${pool.length} 道）。`)
   }
@@ -469,12 +519,19 @@ export default function Practice({ onBack }: { onBack: () => void }) {
     setError('')
     try {
       const correct = selected === current.answerIndex
+      const qid = current.id
       await addAttempt({
         questionId: current.id,
         paperId: sessionPaper?.id,
         selectedAnswer: current.options[selected] ?? '',
         correct,
         answeredAt: new Date(),
+      })
+      // P7：记入本次练习的作答（答题卡与成绩用）。
+      setSessionAnswers((prev) => {
+        const next = new Map(prev)
+        next.set(qid, { selected, correct, submitted: true, subjectiveAnswered: false })
+        return next
       })
       setLastCorrect(correct)
       setSubmitted(true)
@@ -489,6 +546,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   // P6：写作保存——答案存 attempts（subjective，不自动判分、不计正确率、不进错题范围）。
   const handleWritingSave = async (text: string, seconds: number) => {
     if (!current || current.id === undefined) return
+    const qid = current.id
     setError('')
     try {
       await addAttempt({
@@ -500,6 +558,12 @@ export default function Practice({ onBack }: { onBack: () => void }) {
         subjective: true,
         writingSeconds: seconds,
       })
+      // P7：记入本次练习的作答（答题卡上写作题变“已写”）。
+      setSessionAnswers((prev) => {
+        const next = new Map(prev)
+        next.set(qid, { selected: null, correct: null, submitted: false, subjectiveAnswered: true })
+        return next
+      })
       setWritingSaved(true)
       await refresh()
     } catch (e) {
@@ -509,15 +573,22 @@ export default function Practice({ onBack }: { onBack: () => void }) {
 
   const handleNext = () => {
     if (currentIdx + 1 < sessionQuestions.length) {
-      setCurrentIdx((i) => i + 1)
-      resetCard()
+      // P7：跳题时恢复目标题在本练习里的作答状态（已答过的题显示结果与解析）。
+      goToQuestion(currentIdx + 1)
     } else {
-      setSessionMode(null)
-      setSessionQuestions([])
-      setSessionPaper(null)
-      resetCard()
-      void refresh()
+      // P7：最后一题答完 → 交卷看成绩（不直接退出）。
+      setShowSummary(true)
     }
+  }
+
+  /** P7：退出本次练习（回到练习首页）。 */
+  const exitSession = () => {
+    setSessionMode(null)
+    setSessionQuestions([])
+    setSessionPaper(null)
+    resetSession()
+    resetCard()
+    void refresh()
   }
 
   const handleFile = async (file: File | undefined) => {
@@ -698,7 +769,105 @@ export default function Practice({ onBack }: { onBack: () => void }) {
         </>
       )}
 
-      {sessionMode !== null && current && (
+      {sessionMode !== null && showSummary && (
+        <>
+          <h2>本次练习成绩（#15）</h2>
+          <p>
+            {sessionMode === 'paper'
+              ? `试卷练习：${sessionPaper?.title ?? ''}`
+              : '随机题目练习'}
+            · 客观题自动判分，写作题不自动判分（待自评）。
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>项目</th>
+                <th>数量</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>客观题总数</td>
+                <td>{sessionScore.total} 道</td>
+              </tr>
+              <tr>
+                <td>已答</td>
+                <td>{sessionScore.answered} 道</td>
+              </tr>
+              <tr>
+                <td>答对</td>
+                <td>{sessionScore.correct} 道</td>
+              </tr>
+              <tr>
+                <td>答错</td>
+                <td>{sessionScore.wrong} 道</td>
+              </tr>
+              <tr>
+                <td>未答</td>
+                <td>{sessionScore.unanswered} 道</td>
+              </tr>
+              <tr>
+                <td>正确率（答对 ÷ 已答）</td>
+                <td>{sessionScore.accuracy === null ? '—（本次没答客观题）' : `${sessionScore.accuracy}%`}</td>
+              </tr>
+              <tr>
+                <td>主观题（写作）</td>
+                <td>
+                  已写 {sessionScore.subjectiveAnswered} / {sessionScore.subjectiveTotal} 道 · 待自评，不计正确率
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          {sessionScore.byQtype.length > 0 && (
+            <>
+              <h3>按题型分项</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>题型</th>
+                    <th>客观题答对 / 已答 / 总数</th>
+                    <th>正确率</th>
+                    <th>主观题已写 / 总数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessionScore.byQtype.map((row) => (
+                    <tr key={row.qtype}>
+                      <td>{row.qtype}</td>
+                      <td>
+                        {row.correct} / {row.answered} / {row.total}
+                      </td>
+                      <td>{row.accuracy === null ? '—' : `${row.accuracy}%`}</td>
+                      <td>
+                        {row.subjectiveAnswered} / {row.subjectiveTotal}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+          <p>
+            <button
+              type="button"
+              onClick={() => {
+                // 再练一次：同一批题重新开始（本次作答记录清空，答题记录仍在库里）。
+                setShowSummary(false)
+                resetSession()
+                resetCard()
+                setCurrentIdx(0)
+              }}
+            >
+              再练一次
+            </button>{' '}
+            <button type="button" className="secondary" onClick={exitSession}>
+              返回练习首页
+            </button>
+          </p>
+        </>
+      )}
+
+      {sessionMode !== null && !showSummary && current && (
         <>
           <h2>
             {sessionMode === 'paper'
@@ -709,6 +878,19 @@ export default function Practice({ onBack }: { onBack: () => void }) {
           <p>
             第 {currentIdx + 1} / {sessionQuestions.length} 道 · 题型 {current.qtype} · 难度{' '}
             {current.difficulty} · 来源 {current.source} · 核实状态 {current.status}
+          </p>
+          <AnswerCard
+            title="答题卡（#15）"
+            states={cardStates}
+            current={currentIdx}
+            onJump={goToQuestion}
+          />
+          <p>
+            本次练习成绩：客观题已答 {sessionScore.answered} / {sessionScore.total} 道 · 答对{' '}
+            {sessionScore.correct} 道 · 正确率{' '}
+            {sessionScore.accuracy === null ? '—' : `${sessionScore.accuracy}%`}
+            {sessionScore.subjectiveTotal > 0 &&
+              ` · 写作已写 ${sessionScore.subjectiveAnswered} / ${sessionScore.subjectiveTotal} 道（待自评，不计正确率）`}
           </p>
           {current.qtype === '听力' && <ListeningAudio question={current} />}
           {current.qtype === '阅读' && current.timeLimit !== undefined && (
@@ -824,16 +1006,10 @@ export default function Practice({ onBack }: { onBack: () => void }) {
             </p>
           )}
           <p>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                setSessionMode(null)
-                setSessionQuestions([])
-                setSessionPaper(null)
-                resetCard()
-              }}
-            >
+            <button type="button" onClick={() => setShowSummary(true)}>
+              交卷看成绩
+            </button>{' '}
+            <button type="button" className="secondary" onClick={exitSession}>
               退出本次练习
             </button>
           </p>
