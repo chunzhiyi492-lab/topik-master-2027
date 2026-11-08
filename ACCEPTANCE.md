@@ -107,3 +107,45 @@
 - 未在 iPhone / Windows 真机上测（与 P1 同款待办）；朗读按钮未在本阶段加（发音是 P3 #6 的事）。
 - `getVocabByMastery` 已写好，但词汇页（Vocab.tsx）本阶段冻结未动，所以掌握度筛选目前只在复习页可用；词汇页接筛选留给 P3。
 - 桌面截图里打分预览显示“认识 · 下次约 31 分钟后”——这是 있다01 打过一次“不认识”后的 FSRS 状态（Again 之后间隔变短），不是 bug。
+
+## P3 发音与统计（#6 / #21 / #20）——2026-11-08
+
+分支：`feature/p3-pronunciation-stats`（worktree `~/workspace/topik-master-2027-p3`，基于 main 446e351）。
+
+### 改动文件
+- 新建 `src/lib/stats.ts`（聚合函数：`getDayStats` / `getWeekStats` / `getStudiedDates` / `getMonthCells` / `buildDailyExport`）
+- 新建 `src/pages/Stats.tsx`（今日统计 + 最近 7 天 + 打卡日历 + 导出当日 JSON）
+- `src/pages/Vocab.tsx`：浏览表加“发音”列（每行一个 🔊 发音按钮）与“发音（#6）”区（语速滑块 0.5–1.5 + 语音状态提示）；筛选区加“掌握度”下拉（P2 留给 P3 的收尾，用已有的 `getVocabByMastery`）
+- `src/pages/Review.tsx`：复习卡片与随机抽词卡片加 🔊 发音按钮；卡片区加语速滑块 + 语音状态提示
+- `src/App.tsx`：只加首页“统计”按钮 + Stats 页入口；版本说明改成 P3；词汇、复习、金属风、四叶草入口保留
+- 语速存在 localStorage（`topik-master-speech-rate`，默认 0.9），词汇页与复习页共用；`speech.ts` / `srs.ts` / `streak.ts` / `SelfTest.tsx` 未动
+
+### 口径（写死，防以后扯皮）
+- 新词数 = 当天第一次打分的词数（按 reviews 表里每条词的最早复习日期算）。`DailyStat.newWords` 从来没人写过，不读它。
+- 复习数 = 当天复习记录条数；正确率 = 打“认识 / 很熟”的占比；无复习记录时正确率显示“暂无”。
+- 学习分钟数只取 `DailyStat.minutes`（P4 番茄钟写入后才有数），无记录就是 0 分钟，P3 不编造。
+- 打卡：有复习记录的日期即已学；周日显示“休息”，不记缺勤、不算断签（复用 P2 的 `streak.ts`）。
+
+### 构建与测试（worktree 内实测）
+- `npm run build`：通过。precache 20 个条目（751.73 KiB）；主 chunk 体积警告是 P1 已有的问题。
+- `npm run test:fsrs`：通过，FSRS-7 间隔与 T0 一致（Again 约 1 分钟、Hard 约 14 小时、Good 约 4.8 天、Easy 约 54 天）。
+
+### 真机浏览器实测（npm run preview，端口 4175，全新 Chrome profile）
+先在词汇页点“加载种子”：库内共 1172 条。再进复习页打 5 张分：것01、하다01、있다01 打“认识”，되다01、수02 打“不认识”（顺序即到期顺序）。
+
+| 验收项 | 实测结果 |
+|---|---|
+| 词条发音调用路径真实触发 | 本机 headless Chrome 无韩语语音，**没有听到声音，不谎称听到了**。验证方法：CDP 注入包装了 `speechSynthesis.speak`，点发音后捕获到真实 utterance：`{ text: '나03', lang: 'ko-KR', rate: 0.5 }`；按钮在点击后 100ms 时显示“朗读中…”；页面语音提示明确写着“语音列表为空：浏览器语音尚未加载完成，请稍候再试（等 voiceschanged 事件）”。**需 iPhone 真机复测是否真的出声** |
+| 语速滑块 0.5 → utterance.rate 确为 0.5，滑回 1.0 恢复 | 滑到 0.5 后点发音，捕获的 utterance.rate = 0.5、lang = ko-KR；滑回 1.0 后再点，rate = 1。滑块显示同步变为 0.5x / 1.0x |
+| 统计页数字与当天实际操作一致 | 今日：新词 5 个、复习 5 张、正确率 60%（答对 3 / 5）、学习分钟 0 分钟（附注“番茄钟尚未开发，P4 接入后才有数”）、连续学习 1 天；7 天合计：新词 5 个 · 复习 5 张 · 正确率 60% · 学习 0 分钟，与 5 张打分记录逐项对得上 |
+| 日历标出已学日期；周日显示休息、不记缺勤 | 2026 年 11 月日历逐格核对：周日 1 / 8 / 15 / 22 / 29 日格都写“休息”；今天 11 月 8 日（周日）那格是“8 休息 ● 已学 今天”——学了照常标已学，休息与已学不冲突；连续天数仍按“周日不算断签”算（显示 1 天） |
+| 导出当日 JSON 能下载，内容与页面数字一致 | 点“导出当日 JSON”后下载到 `topik-stats-2026-11-08.json`，内容 `day: { date: '2026-11-08', newWords: 5, reviewedWords: 5, correctCount: 3, accuracy: 0.6, minutes: 0 }`，与页面数字一致；页面同时显示导出回执 |
+| 掌握度筛选在词汇页可用 | 词汇页选掌握度“认识”→ 共 3 条；选“不认识”→ 共 2 条，与 5 张打分记录一致 |
+| 横向溢出 | 桌面 1280 统计页无溢出；手机 390 统计页 scrollWidth - innerWidth = 0，无溢出 |
+
+截图（`~/workspace/p3-stats/`，不进仓库）：`stats-desktop-1280.png`、`stats-mobile-390.png`、`vocab-pronounce-closeup.png`。三张都逐张看过：统计页今日/7 天数字与实测一致；词汇页特写里语速滑块、语音提示、每行 🔊 发音按钮都在。
+
+### 已知不足（老实写）
+- **本机没听到声音**：headless Chrome 无韩语语音（`getVoices()` 为空），发音只验证到调用路径与 utterance 参数；是否真的出声、语速变化是否可感知，**必须 iPhone 真机复测**（T0 时 iPhone 的 ko-KR 语音是验证通过的）。
+- 未在 iPhone / Windows 真机上测（与 P1、P2 同款待办）。
+- **SelfTest 测试词短暂漏进复习队列（T0 旧行为，P3 未改）**：第一轮验收时，脚本在首页刚渲染就点进复习页，第一张卡读到的是 `테스트01`——首页 `SelfTest` 每次挂载都会先写 3 条测试词再删，窗口期只有几毫秒，但快速跳转正好撞上，测试词短暂进了到期队列且被打了一次分（该条打分记录留在库里，测试词本身已被 SelfTest 删掉）。重跑时加了等待（等自测跑完、等队列加载完），5 张分全打在真实词上。`SelfTest.tsx` 在 P3 禁改清单里，没动；以后修可在自测用单独的库、或让复习队列排除 `isTestData`。
