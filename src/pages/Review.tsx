@@ -22,14 +22,23 @@ import {
   type DueItem,
   type GradeLabel,
 } from '../lib/review'
+import { isSpeechSupported, listKoreanVoices, speakKorean } from '../lib/speech'
 
 // TOPIK MASTER 2027 — 复习页（P2：#2 FSRS 间隔复习卡片、#3 随机抽词、
-// #7 词汇掌握度标记、#5 收藏与错词本）
+// #7 词汇掌握度标记、#5 收藏与错词本；P3 加 #6 词条发音）
 // 功能页先用朴素结构实现，主题样式等薯饼拍板后再接入。
 // 铁律：打分只按 FSRS 改下次到期日；掌握度 = 最新一次打分档位；
 // 错词 = 最新一次打分是“不认识/模糊”的词，打“认识/很熟”后自动离开错词本。
 
 type QueueMode = 'due' | 'wrong' | 'favorite' | 'random'
+
+const SPEECH_RATE_KEY = 'topik-master-speech-rate'
+
+/** 语速 0.5–1.5，默认 0.9（与 speech.ts 一致），与词汇页共用一个 localStorage 键。 */
+function loadSpeechRate(): number {
+  const raw = Number(window.localStorage.getItem(SPEECH_RATE_KEY) ?? '')
+  return raw >= 0.5 && raw <= 1.5 ? raw : 0.9
+}
 
 const MODE_LABEL: Record<QueueMode, string> = {
   due: '到期复习',
@@ -64,6 +73,10 @@ export default function Review({ onBack }: { onBack: () => void }) {
   const [grading, setGrading] = useState(false)
   const [drawing, setDrawing] = useState(false)
   const [error, setError] = useState('')
+  const [speechRate, setSpeechRate] = useState<number>(() => loadSpeechRate())
+  const [speakingId, setSpeakingId] = useState<number | null>(null)
+  const [voiceNote, setVoiceNote] = useState('')
+  const [speakError, setSpeakError] = useState('')
 
   const current = queue.length > 0 ? queue[0] : null
 
@@ -98,6 +111,28 @@ export default function Review({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     void refreshAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 发音：进页时查一次本机韩语语音；语音列表晚到时 voiceschanged 再查一次。
+  // 无韩语语音不静默失败，voiceNote 原样显示原因。
+  useEffect(() => {
+    const check = () => {
+      if (!isSpeechSupported()) {
+        setVoiceNote('当前浏览器不支持 speechSynthesis，发音不可用。')
+        return
+      }
+      const { voices, reason } = listKoreanVoices()
+      setVoiceNote(
+        voices.length > 0
+          ? `已找到 ${voices.length} 个韩语语音：${voices.map((v) => v.name).join('、')}`
+          : reason,
+      )
+    }
+    check()
+    const synth = window.speechSynthesis
+    synth?.addEventListener('voiceschanged', check)
+    return () => synth?.removeEventListener('voiceschanged', check)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -235,6 +270,35 @@ export default function Review({ onBack }: { onBack: () => void }) {
     return ` · 下次${formatDue(p.dueAt)}`
   }
 
+  // 发音（#6）：调 speech.ts 的 speakKorean（ko-KR + 语速）；播完恢复按钮。
+  const handleSpeak = (entry: VocabEntry) => {
+    if (entry.id === undefined) return
+    const res = speakKorean(entry.ko, { rate: speechRate })
+    if (!res.ok) {
+      setSpeakError(`发音失败：${res.reason}`)
+      return
+    }
+    setSpeakError('')
+    setSpeakingId(entry.id)
+    const timer = window.setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        window.clearInterval(timer)
+        setSpeakingId(null)
+      }
+    }, 200)
+    window.setTimeout(() => {
+      window.clearInterval(timer)
+      setSpeakingId(null)
+    }, 15000)
+  }
+
+  const handleRateChange = (value: string) => {
+    const r = Number(value)
+    if (Number.isNaN(r) || r < 0.5 || r > 1.5) return
+    setSpeechRate(r)
+    window.localStorage.setItem(SPEECH_RATE_KEY, String(r))
+  }
+
   const doneCount = queueTotal - queue.length
 
   return (
@@ -324,11 +388,37 @@ export default function Review({ onBack }: { onBack: () => void }) {
                 >
                   {current.vocab.favorite ? '★ 已收藏' : '☆ 收藏'}
                 </button>{' '}
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => handleSpeak(current.vocab)}
+                  aria-label={`朗读 ${current.vocab.ko}`}
+                >
+                  {speakingId === current.vocab.id ? '朗读中…' : '🔊 发音'}
+                </button>{' '}
                 <button type="button" className="secondary" onClick={handleSkip} disabled={queue.length <= 1}>
                   跳过这张
                 </button>
               </p>
             </div>
+            <h3>发音（#6）</h3>
+            <p>
+              <label>
+                语速：
+                <input
+                  type="range"
+                  min={0.5}
+                  max={1.5}
+                  step={0.1}
+                  value={speechRate}
+                  onChange={(e) => handleRateChange(e.target.value)}
+                  style={{ verticalAlign: 'middle' }}
+                />{' '}
+                {speechRate.toFixed(1)}x（0.5 最慢，1.5 最快）
+              </label>
+            </p>
+            <p>语音：{voiceNote}</p>
+            {speakError && <p className="fail">{speakError}</p>}
             <p>先回想，再打分（打分后间隔按 FSRS 变化）：</p>
             <p>
               {GRADES.map((g) => (
@@ -378,6 +468,14 @@ export default function Review({ onBack }: { onBack: () => void }) {
           <p>
             <button type="button" onClick={() => void handleReviewRandom()}>
               用这张卡复习
+            </button>{' '}
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => handleSpeak(randomWord)}
+              aria-label={`朗读 ${randomWord.ko}`}
+            >
+              {speakingId === randomWord.id ? '朗读中…' : '🔊 发音'}
             </button>
           </p>
         </div>
