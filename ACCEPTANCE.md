@@ -205,3 +205,72 @@
 - **25 分钟专注轮没有真实等过**：只把时长调到 1 分钟真实走完验证了“走完 → 记分钟”的链路；25 分钟轮的完整走完未实测（只验证了时钟显示 25:00 与默认值）。iPhone 后台计时（切后台再回来）也未实测——计时按结束时间点算，理论上回来后按时间点补算不丢，但 Safari 后台行为**必须真机复测**。
 - 未在 iPhone / Windows 真机上测（与 P1–P3 同款待办）；发音仍需 iPhone 复测是否真的出声（P3 遗留）。
 - 词汇覆盖 3/1172 显示为 0%（四舍五入），数字本身是对的，只是刚开始学时百分比看着小。
+
+## P5 试题地基（#9 / #17 / #10）——2026-11-08
+
+分支：`feature/p5-question-bank`（worktree `~/workspace/topik-master-2027-p5`，基于 main 217b641）。
+
+首批题目来源已定：**官方真题本地导入**（她 2026-11-08 23:18 决定）。用户从 topik.go.kr 下载官方真题 PDF 后发来，届时再做成导入格式。**本阶段不编造任何题目、不写任何真题或自编题进仓库**——题库出厂是空的，只搭模型与导入器。
+
+### 改动文件
+- `src/lib/db.ts`：升到 Dexie version 2，新建 `questions` / `papers` / `attempts` 三张表；新增查询函数与 `importQuestionBank` 导入器；`clearAllData` 扩展到新表（Dexie transaction 参数上限 7 个，6 张表改逐表清空）；`clearQuestionBank` 只清题库三张表。
+- 新建 `src/pages/Practice.tsx`（试卷练习 + 随机抽题 + JSON 导入 + 清空题库）。
+- `src/App.tsx`：只加首页“练习”入口；版本说明改成 P5；词汇、复习、统计、计划、专注、金属风、四叶草入口保留。
+- `speech.ts` / `srs.ts` / `streak.ts` / `review.ts` / `stats.ts` / `SelfTest.tsx` / `Vocab.tsx` / `Review.tsx` / `Stats.tsx` / `Plan.tsx` / `Focus.tsx` / `data/` / `scripts/` / `vite.config` / PWA / `package.json` 未动；无新依赖；未写任何题目进仓库。
+
+### 导入格式说明（P5 导入器 `importQuestionBank`）
+- 文件：单个 JSON，顶层对象 `{ papers?: [...], questions?: [...] }`，两数组至少一个非空。
+- 试卷字段：`title`（必填，场次，如“TOPIK 84회”）、`level`（级别，如“TOPIK II”，可空）、`examDate`（考试日期 YYYY-MM-DD，可空）、`source`（必填）、`status`（已核实 / 待核实，缺省“待核实”）、`note`（备注，可空）。同名试卷复用已有试卷，不重复建卷。
+- 题目字段：`stem`（必填，题干）、`options`（选项数组；主观题/写作题为空数组）、`answerIndex`（客观题必填，为正确选项下标；主观题必须为空）、`answer`（参考答案/评分要点，可空）、`explanation`（解析，可空）、`source`（必填）、`status`（已核实 / 待核实，缺省“待核实”）、`qtype`（必填：听力/阅读/写作/词汇/语法/其他）、`difficulty`（易/中/难，缺省“中”）、`paperTitle`（所属试卷标题，可空；写了就必须对应上已导入或已有的试卷）、`order`（卷内题序，可空，缺省按导入顺序）。
+- 校验铁律：题干、来源、题型缺一不可，缺来源的条目拒绝入库并逐条报错、不静默丢弃；客观题 answerIndex 超出选项范围拒绝；同一试卷内题干重复的题跳过（记入重复跳过数）；先全部校验、再一次性写入。
+- 最小示例结构（只写字段名与占位符，不含任何真实题目内容）：
+```json
+{
+  "papers": [
+    { "title": "（场次，如 TOPIK 84회）", "level": "TOPIK II", "examDate": "", "source": "（来源）", "status": "待核实", "note": "" }
+  ],
+  "questions": [
+    {
+      "stem": "（题干文本）", "options": ["（选项 1）", "（选项 2）"],
+      "answerIndex": 0, "answer": "", "explanation": "（解析）",
+      "source": "（来源）", "status": "待核实",
+      "qtype": "阅读", "difficulty": "中", "paperTitle": "（场次）", "order": 1
+    }
+  ]
+}
+```
+
+### 口径（写死，防以后扯皮）
+- 错题范围 = 最新一次答题答错的题目（主观题不写 attempts，不在错题范围里）；仅未答 = 没有任何答题记录的题目。
+- 正确率 = 答对次数 ÷ 答题总次数（客观题）；主观题（写作/简答）不自动判分，练习页只显示参考答案与解析，不写 attempts，判分与答题记录在 P6 写作练习里接。
+- 清空题库只删 questions / papers / attempts，不碰词汇、复习、统计数据。
+- 听力题的音频字段（`audio`）与写作计时字段（`timeLimit`）在 P6 再加，本阶段不加。
+
+### 构建与测试（worktree 内实测）
+- `npm run build`：通过。precache 20 个条目（779.05 KiB）；主 chunk 体积警告是 P1 已有的问题。
+- `npm run test:fsrs`：通过，FSRS-7 间隔与 T0 一致（Again 约 1 分钟、Hard 约 14 小时、Good 约 4.8 天、Easy 约 54 天）。
+- 构建时修过两个小错：Dexie `transaction()` 重载最多 7 个参数，`clearAllData` 的 6 张表 + mode + scope 共 8 个报类型错，改逐表清空；Practice.tsx 删了两个未用到的 import。
+
+### Dexie 迁移实测（同一浏览器 profile、同一端口 4177，先旧版后 P5 版）
+先用 main 217b641 的构建（临时 worktree `/tmp/topik-master-2027-old`，已删）打开同一 profile：加载种子（库内共 1172 条），复习页打 3 张分（것01、하다01 打“认识”，있다01 打“不认识”），统计快照：新词 3、复习 3、正确率 67%、分钟 0。然后停掉旧版服务、起 P5 构建（同一端口、同一 profile），确认首页版本说明翻到 P5 后逐项核对：词汇仍为 1172 条、复习“今天已复习 3 张”、统计新词 3、复习 3、正确率 67%——**旧数据一条不少**。
+
+### 真机浏览器实测（npm run preview，端口 4177，全新 Chrome profile 续用迁移 profile）
+测试夹具在 `~/workspace/p5-questions/fixture-papers.json`（不进仓库）：2 张试卷、每卷 3 道题，来源一律写“测试样例”，其中 1 道故意缺 `source` 字段。
+
+| 验收项 | 实测结果 |
+|---|---|
+| 练习页空状态 | 题库 0 场 0 道时显示“题库目前是空的。首批题目来源已定为官方真题本地导入……”+ TOPIK 官网（topik.go.kr）学习资料室链接 + 导入入口 |
+| 导入夹具 | 新增试卷 2 场（复用 0 场）、新增题目 5 道（重复跳过 0 道）、拒绝 1 条（第 6 道题缺 source，已拒绝）；试卷表：阅读卷 3 道、听力卷 2 道 |
+| 试卷练习按场次练，每题显示来源与核实状态 | 阅读卷第 1 道显示“来源 测试样例 · 核实状态 待核实”；答对后显示解析与来源，答错后显示正确答案（Q2 选 B 答错，显示“正确答案：A.”） |
+| 答题记录写入 attempts，刷新不丢 | 练完 3 道（2 对 1 错）后练习页显示“已答 3 次 · 正确率 67%”；刷新后仍为已答 3 次 |
+| 随机抽题按题型/难度/错题范围抽取正确 | 范围“仅错题”只抽到 1 道（答错的第 2 道 학교에 갑니다）；范围“全部”抽 5 道（第 1 / 5 道） |
+| 清空题库 | 试卷 0 场、题目 0 道、空状态回来；词汇仍为 1172 条（清空只动题库三张表） |
+| 全库“官方真题”检索校验 | `grep -rn "官方真题" src/ data/ ACCEPTANCE.md`：全部命中都在说明性文字里（App 版本说明、db.ts 注释、Practice.tsx 注释与空状态/导入区文案），0 道题目带该标记——本阶段库里本来就没有题目 |
+
+截图（`~/workspace/p5-questions/`，不进仓库）：`practice-desktop-1280.png`、`practice-mobile-390.png`（练习页空状态 + 导入入口）。两张都逐张看过：试卷 0 场、题目 0 道、空状态说明、随机抽题筛选、导入区、清空题库都在；桌面与手机均无横向溢出（scrollWidth − innerWidth：桌面 −15、手机 0）。注：手机上随机抽题那行“抽 5 道”会换行，是正常换行、无溢出。
+
+### 已知不足（老实写）
+- 未在 iPhone / Windows 真机上测（与 P1–P4 同款待办）；发音仍需 iPhone 复测是否真的出声（P3 遗留）。
+- 25 分钟专注轮没有真实等过（P4 遗留）；iPhone 后台计时未实测（P4 遗留）。
+- **同一 profile 从旧构建切到新构建时，旧 Service Worker 会继续提供缓存的旧版页面**：本次迁移验收第一轮，首页版本说明一直停留在 P4（数据核对却通过了——因为读的是旧构建 + 旧数据，Dexie 升级根本没跑）；用 CDP 清掉该 origin 的 cache_storage + service_workers（不动 IndexedDB 与 localStorage）并带缓存破坏参数重新导航后，才切到 P5 构建、升级真正跑起来。线上部署后如遇手机上仍显示旧版本，先关掉 PWA 再重开（或刷新）即可。
+- 写作/主观题本阶段只展示参考答案与解析，不记录答题、不计入正确率与错题范围，P6 再接。
