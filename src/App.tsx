@@ -9,15 +9,9 @@ import Practice from './pages/Practice'
 import MockExam from './pages/MockExam'
 import WrongQuestions from './pages/WrongQuestions'
 import Settings from './pages/Settings'
-import MetalPrototype from './pages/MetalPrototype'
-import CloverDreamcore from './pages/CloverDreamcore'
 
 // TOPIK MASTER 2027 — T0 首页
 // 只有项目说明 + 自测入口。词汇浏览、复习页是 T1 及以后任务，T0 不做。
-// 冷金属风原型入口（prototype/metal-design 分支）：仅切换显示原型页，不引入路由库；
-// 加 ?metal=1 可直接打开原型，方便截图验收。
-// 四叶草·梦核原型入口（prototype/clover-dreamcore 分支）：同理，
-// 加 ?clover=1 可直接打开原型。两个原型入口共存，互不影响。
 function App() {
   const [showVocab, setShowVocab] = useState(false)
   const [showReview, setShowReview] = useState(false)
@@ -28,12 +22,6 @@ function App() {
   const [showMockExam, setShowMockExam] = useState(false)
   const [showWrongQuestions, setShowWrongQuestions] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showMetal, setShowMetal] = useState(
-    () => new URLSearchParams(window.location.search).get('metal') === '1',
-  )
-  const [showClover, setShowClover] = useState(
-    () => new URLSearchParams(window.location.search).get('clover') === '1',
-  )
 
   if (showVocab) {
     return <Vocab onBack={() => setShowVocab(false)} />
@@ -69,14 +57,6 @@ function App() {
 
   if (showSettings) {
     return <Settings onBack={() => setShowSettings(false)} />
-  }
-
-  if (showMetal) {
-    return <MetalPrototype onBack={() => setShowMetal(false)} />
-  }
-
-  if (showClover) {
-    return <CloverDreamcore onBack={() => setShowClover(false)} />
   }
 
   return (
@@ -123,12 +103,6 @@ function App() {
         </button>{' '}
         <button type="button" onClick={() => setShowSettings(true)}>
           设置（备份 / 离线与安装）
-        </button>{' '}
-        <button type="button" onClick={() => setShowMetal(true)}>
-          金属风原型（预览）
-        </button>{' '}
-        <button type="button" onClick={() => setShowClover(true)}>
-          四叶草·梦核原型（预览）
         </button>
       </p>
       <SelfTest />
