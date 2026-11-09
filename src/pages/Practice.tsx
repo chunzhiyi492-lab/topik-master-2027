@@ -310,7 +310,17 @@ export function WritingCard({
   )
 }
 
-export default function Practice({ onBack }: { onBack: () => void }) {
+export default function Practice({
+  onBack,
+  initialQtype,
+  initialMode,
+}: {
+  onBack: () => void
+  /** hash 参数 ?qtype=听力/阅读/写作：预选随机练习的题型筛选。 */
+  initialQtype?: string
+  /** hash 参数 ?mode=random：进入后定位到随机抽题区。 */
+  initialMode?: string
+}) {
   const [papers, setPapers] = useState<Paper[]>([])
   const [paperCounts, setPaperCounts] = useState<Map<number, number>>(new Map())
   const [totalQuestions, setTotalQuestions] = useState(0)
@@ -328,7 +338,9 @@ export default function Practice({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState('')
   const [importResult, setImportResult] = useState<QuestionBankImportResult | null>(null)
   const [importing, setImporting] = useState(false)
-  const [randomQtype, setRandomQtype] = useState('全部')
+  const [randomQtype, setRandomQtype] = useState(
+    initialQtype !== undefined && QTYPE_OPTIONS.includes(initialQtype) ? initialQtype : '全部',
+  )
   const [randomDifficulty, setRandomDifficulty] = useState('全部')
   const [randomScope, setRandomScope] = useState<Scope>('all')
   const [randomCount, setRandomCount] = useState(5)
@@ -449,6 +461,14 @@ export default function Practice({ onBack }: { onBack: () => void }) {
 
   useEffect(() => {
     void refresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // hash 参数 ?mode=random：进入后定位到随机抽题区（该区平时在试卷列表下方）。
+  useEffect(() => {
+    if (initialMode === 'random') {
+      document.getElementById('random-practice')?.scrollIntoView()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -682,7 +702,7 @@ export default function Practice({ onBack }: { onBack: () => void }) {
             </table>
           )}
 
-          <h2>随机题目练习（#10）</h2>
+          <h2 id="random-practice">随机题目练习（#10）</h2>
           <p>
             题型：
             <select value={randomQtype} onChange={(e) => setRandomQtype(e.target.value)}>
