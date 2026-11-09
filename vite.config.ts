@@ -21,17 +21,19 @@ export default defineConfig({
         // 写根路径 '/' 会在 Pages 上 404，“添加到主屏幕”拿不到图标。
         start_url: '/topik-master-2027/',
         display: 'standalone',
-        background_color: '#fff7f0',
-        theme_color: '#d7929f',
+        background_color: '#f7f2ec',
+        theme_color: '#f6e8f1',
         icons: [
           { src: '/topik-master-2027/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/topik-master-2027/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
-        // 主 chunk 含六批内置种子（7,605 条），打包后约 2.3 MB，超过 workbox 默认 2 MiB
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,webmanifest}'],
+        // 主 chunk 含七批内置种子（8,665 条），打包后约 2.5 MB，超过 workbox 默认 2 MiB
         // 预缓存上限；种子是离线可用的核心数据，必须进预缓存，故上限提到 3 MiB。
+        // 首页主视觉照片（public/images/garden-hero.jpg，约 300 KB 以内）也进预缓存，
+        // jpg 已加入 globPatterns。
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // 首页与静态资源离线可用；学习数据在 IndexedDB，不走网络缓存。
         navigateFallback: 'index.html',
