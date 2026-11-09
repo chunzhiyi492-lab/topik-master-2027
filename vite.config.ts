@@ -30,6 +30,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // 主 chunk 含六批内置种子（7,605 条），打包后约 2.3 MB，超过 workbox 默认 2 MiB
+        // 预缓存上限；种子是离线可用的核心数据，必须进预缓存，故上限提到 3 MiB。
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // 首页与静态资源离线可用；学习数据在 IndexedDB，不走网络缓存。
         navigateFallback: 'index.html',
       },
