@@ -12,6 +12,8 @@ import {
   type BackupPreview,
 } from '../lib/db'
 
+import SelfTest from './SelfTest'
+
 // TOPIK MASTER 2027 — 设置页（P7：#23 本地备份与恢复、#24 离线使用与安装）
 // 口径（P7 定死）：
 // - 备份 = 整库六类数据（词汇 / 复习记录 / 统计 / 题目 / 试卷 / 答题记录）
@@ -315,6 +317,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           </span>
         )}
       </p>
+
+      <h2>自测（开发期自检）</h2>
+      <SelfTest />
     </>
   )
 }
