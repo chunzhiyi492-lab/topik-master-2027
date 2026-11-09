@@ -15,6 +15,7 @@ import yonsei3SeedJson from '../../data/yonsei-3-seed.json'
 import yonsei4SeedJson from '../../data/yonsei-4-seed.json'
 import yonsei5SeedJson from '../../data/yonsei-5-seed.json'
 import yonsei6SeedJson from '../../data/yonsei-6-seed.json'
+import yonseiSpeakingSeedJson from '../../data/yonsei-speaking-seed.json'
 
 export interface LoadSeedResult {
   /** NIKL 种子新入库条数 */
@@ -94,9 +95,10 @@ function normalizeEntry(raw: unknown): { entry: Omit<VocabEntry, 'id'> } | { err
 }
 
 /**
- * 加载六批内置种子进 IndexedDB。
- * 顺序：先 NIKL（925 条），后延世 1–2 册（1,960 条）、3 册（962 条）、4 册（1,045 条）、
- * 5 册（1,699 条）、6 册（1,781 条），六批去重后共 7,605 条。
+ * 加载七批内置种子进 IndexedDB。
+ * 顺序：先 NIKL（925 条），后延世 1–2 册（1,960 条）、3 册（962 条）、4 册（1,056 条）、
+ * 5 册（1,744 条）、6 册（1,830 条）、口语独有词（958 条，1、2、3、4、6 册；5 册未补），
+ * 七批去重后共 8,665 条。
  * - 按 ko 判重：库里已有的跳过；延世各批之间重叠的 ko，把后批条的 zh / yonsei_lesson /
  *   pos（后批 pos 为空时不覆盖）补进已入库的条，不另建新条。
  * - 全部强制 status=待核实（见本文件顶部铁律）。
@@ -123,6 +125,7 @@ export async function loadSeedVocabulary(): Promise<LoadSeedResult> {
     ...(yonsei4SeedJson as unknown[]),
     ...(yonsei5SeedJson as unknown[]),
     ...(yonsei6SeedJson as unknown[]),
+    ...(yonseiSpeakingSeedJson as unknown[]),
   ]
 
   // 工具：把一条种子条目按“新增 / 合并 / 跳过”处理，sourceLabel 仅用于区分两批的计数。
