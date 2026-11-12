@@ -2472,7 +2472,7 @@
   {
     "ko": "포털 사이트",
     "pos": "",
-    "zh": "",
+    "zh": "门户网站",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -2480,7 +2480,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "通过互联网提供信息搜索或社区活动等各种服务的网站。",
+    "zh_source": "krdict"
   },
   {
     "ko": "타이어",
@@ -3252,7 +3254,7 @@
   {
     "ko": "언덕",
     "pos": "",
-    "zh": "",
+    "zh": "坡，丘陵，山坡，山丘",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册12课",
@@ -3260,7 +3262,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "像小山一样稍微倾斜，比一般的平地稍微突起的地方。",
+    "zh_source": "krdict"
   },
   {
     "ko": "바위",
@@ -3772,7 +3776,7 @@
   {
     "ko": "예술",
     "pos": "",
-    "zh": "",
+    "zh": "艺术",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册14课",
@@ -3780,7 +3784,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "学问和技术。",
+    "zh_source": "krdict"
   },
   {
     "ko": "일등",
@@ -5202,7 +5208,7 @@
   {
     "ko": "메모지",
     "pos": "",
-    "zh": "",
+    "zh": "便签纸，便笺",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册20课",
@@ -5210,7 +5216,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用于记录便条的纸；或写有简单的文字记录的纸。",
+    "zh_source": "krdict"
   },
   {
     "ko": "품질",
@@ -6151,7 +6159,7 @@
   {
     "ko": "전망",
     "pos": "",
-    "zh": "",
+    "zh": "眺望，瞭望",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册3课",
@@ -6159,12 +6167,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "从远处遥望某地；或从远处看到的风景。",
+    "zh_source": "krdict"
   },
   {
     "ko": "어둡다",
     "pos": "",
-    "zh": "",
+    "zh": "暗，黑暗",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册3课",
@@ -6172,7 +6182,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "没有光或光线很弱而不亮。",
+    "zh_source": "krdict"
   },
   {
     "ko": "부동산",
@@ -6866,7 +6878,7 @@
   {
     "ko": "가득",
     "pos": "",
-    "zh": "",
+    "zh": "多，充满，满满地",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册5课",
@@ -6874,12 +6886,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "量或数达到既定范围的样子。",
+    "zh_source": "krdict"
   },
   {
     "ko": "드디어",
     "pos": "",
-    "zh": "",
+    "zh": "终于，到底，总算",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册5课",
@@ -6887,12 +6901,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "期待已久的最终；到了最后。",
+    "zh_source": "krdict"
   },
   {
     "ko": "점점",
     "pos": "",
-    "zh": "",
+    "zh": "越来越",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册5课",
@@ -6900,7 +6916,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "程度随着时间的推移而逐渐地。",
+    "zh_source": "krdict"
   },
   {
     "ko": "거의",
@@ -6918,7 +6936,7 @@
   {
     "ko": "그냥",
     "pos": "",
-    "zh": "",
+    "zh": "就那样",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册5课",
@@ -6926,7 +6944,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "什么都不做而原封不动地。",
+    "zh_source": "krdict"
   },
   {
     "ko": "영양",
@@ -8400,7 +8420,7 @@
   {
     "ko": "일하다",
     "pos": "",
-    "zh": "",
+    "zh": "做事",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -8408,7 +8428,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为了达成某事而投入身心精力。",
+    "zh_source": "krdict"
   },
   {
     "ko": "임하다",
@@ -8504,7 +8526,7 @@
   {
     "ko": "끓이다",
     "pos": "",
-    "zh": "",
+    "zh": "煮沸，烧开",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -8512,12 +8534,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "给液体加热，使其冒气泡。",
+    "zh_source": "krdict"
   },
   {
     "ko": "붙이다",
     "pos": "",
-    "zh": "",
+    "zh": "粘，贴，粘贴",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -8525,12 +8549,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "使某物附在某处而不脱落。",
+    "zh_source": "krdict"
   },
   {
     "ko": "남기다",
     "pos": "",
-    "zh": "",
+    "zh": "剩，剩下",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -8538,12 +8564,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "没用完，留下了一部分。",
+    "zh_source": "krdict"
   },
   {
     "ko": "맞추다",
     "pos": "",
-    "zh": "",
+    "zh": "配，组装，拼",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册9课",
@@ -8551,7 +8579,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "把零散的部件放在恰当的位置上拼装起来。",
+    "zh_source": "krdict"
   },
   {
     "ko": "속마음",
@@ -9193,7 +9223,7 @@
   {
     "ko": "한복",
     "pos": "",
-    "zh": "",
+    "zh": "韩服",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册11课",
@@ -9201,7 +9231,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "韩国的传统服装。",
+    "zh_source": "krdict"
   },
   {
     "ko": "군데",
@@ -9531,7 +9563,7 @@
   {
     "ko": "여행지",
     "pos": "",
-    "zh": "",
+    "zh": "旅游地点，旅行地",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册12课",
@@ -9539,7 +9571,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "去旅行的地方。",
+    "zh_source": "krdict"
   },
   {
     "ko": "여행 기간",
@@ -9557,7 +9591,7 @@
   {
     "ko": "계산하다",
     "pos": "",
-    "zh": "",
+    "zh": "计算",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册12课",
@@ -9565,7 +9599,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "数数或进行加减乘除等运算。",
+    "zh_source": "krdict"
   },
   {
     "ko": "가죽",
@@ -10870,7 +10906,7 @@
   {
     "ko": "문제",
     "pos": "",
-    "zh": "",
+    "zh": "题，问题",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册16课",
@@ -10878,12 +10914,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "要求解答的题目。",
+    "zh_source": "krdict"
   },
   {
     "ko": "걱정",
     "pos": "",
-    "zh": "",
+    "zh": "担心，忧虑，担忧",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册16课",
@@ -10891,7 +10929,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "害怕发生不好的事情而感到不安。",
+    "zh_source": "krdict"
   },
   {
     "ko": "복사기",
@@ -11494,7 +11534,7 @@
   {
     "ko": "편하다",
     "pos": "",
-    "zh": "",
+    "zh": "舒服，舒畅",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册18课",
@@ -11502,12 +11542,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "身体或心情不难受，好。",
+    "zh_source": "krdict"
   },
   {
     "ko": "불편하다",
     "pos": "",
-    "zh": "",
+    "zh": "不便，不方便",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册18课",
@@ -11515,12 +11557,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "使用时不便利。",
+    "zh_source": "krdict"
   },
   {
     "ko": "친절하다",
     "pos": "",
-    "zh": "",
+    "zh": "亲切，关切，热情",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册18课",
@@ -11528,12 +11572,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "待人的态度和蔼可亲。",
+    "zh_source": "krdict"
   },
   {
     "ko": "정확하다",
     "pos": "",
-    "zh": "",
+    "zh": "正确",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册18课",
@@ -11541,7 +11587,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "确实无误。",
+    "zh_source": "krdict"
   },
   {
     "ko": "고궁",
@@ -11884,7 +11932,7 @@
   {
     "ko": "던지다",
     "pos": "",
-    "zh": "",
+    "zh": "投，掷，扔",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册19课",
@@ -11892,7 +11940,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "挥动手臂，把手里拿着的东西向空中丢出去。",
+    "zh_source": "krdict"
   },
   {
     "ko": "편을 나누다",
@@ -12404,7 +12454,7 @@
   {
     "ko": "스타일",
     "pos": "",
-    "zh": "",
+    "zh": "造型",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册20课",
@@ -12412,12 +12462,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "发型或服装的样子。",
+    "zh_source": "krdict"
   },
   {
     "ko": "서비스",
     "pos": "",
-    "zh": "",
+    "zh": "服务",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册20课",
@@ -12425,12 +12477,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "不直接生产产品的活动，如销售、旅游、金融、医疗等。",
+    "zh_source": "krdict"
   },
   {
     "ko": "렌터카",
     "pos": "",
-    "zh": "",
+    "zh": "租赁车辆",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册20课",
@@ -12438,12 +12492,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "支付费用后，可以借用一段时间的汽车。",
+    "zh_source": "krdict"
   },
   {
     "ko": "깁스",
     "pos": "",
-    "zh": "",
+    "zh": "石膏绷带",
     "source": "课程参考",
     "source_level": "课程-3级参考",
     "yonsei_lesson": "3册20课",
@@ -12451,7 +12507,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为固定骨裂或骨折的部分而缠绷带、打石膏。",
+    "zh_source": "krdict"
   },
   {
     "ko": "보험에 들다",

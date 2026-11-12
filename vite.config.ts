@@ -34,7 +34,8 @@ export default defineConfig({
         // 预缓存上限；种子是离线可用的核心数据，必须进预缓存，故上限提到 3 MiB。
         // 首页主视觉照片（public/images/garden-hero.jpg，约 300 KB 以内）也进预缓存，
         // jpg 已加入 globPatterns。
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        // 2026-11-12 krdict 批量补中文释义后主包约 3.03 MB，超 3 MiB，上限提到 4 MiB。
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // 首页与静态资源离线可用；学习数据在 IndexedDB，不走网络缓存。
         navigateFallback: 'index.html',
       },

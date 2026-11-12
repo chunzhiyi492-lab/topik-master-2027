@@ -169,3 +169,12 @@ NIKL A 级 982 行中：同时带 TOPIK-초급 854 行、TOPIK-중급 19 行、�
   `dedup.py`、`classify-build.py`。
 - 遗留待她定（见各册 merge-report）：文化页口径已定并执行（见上条；3 册无词单未补）、未收入词（3 册 36、4 册 18、5 册 74、6 册 54 条）、课次提前口径、
   当다/한복/높이 等个别词的取舍。决定后种子按决定修正并重新上传。
+
+## 9. 中文释义批量补入（2026-11-12，krdict）
+
+- 缺中文释义的词条（`vocab-seed.json` 925 条、`yonsei-1-seed.json` 85 条、`yonsei-3-seed.json` 56 条、
+  `yonsei-4-seed.json` 1,056 条、`yonsei-5-seed.json` 1,744 条、`yonsei-6-seed.json` 1,830 条、
+  `yonsei-speaking-seed.json` 958 条）经国立国语院《한국어기초사전》API（krdict.korean.go.kr，
+  trans_lang=11）逐条查询补入：词形精确匹配，有词性时按词性匹配，取第一义中文译词为 `zh`、
+  中文释义句为 `zh_dfn`，字段 `zh_source` 标 krdict，状态改“待核实”。同音异义词、词性不符、
+  查无者进待核实清单留空，未用机器翻译。中文释义来源：국립국어원 한국어기초사전（CC BY-SA 2.0 KR）。

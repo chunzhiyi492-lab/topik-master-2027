@@ -4942,7 +4942,7 @@
   {
     "ko": "치킨",
     "pos": "",
-    "zh": "",
+    "zh": "炸鸡",
     "source": "课程参考",
     "source_level": "课程-1级参考",
     "yonsei_lesson": "1册7课",
@@ -4950,7 +4950,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "将切成块的鸡肉裹上面粉，放入油锅里炸或烤的食物。",
+    "zh_source": "krdict"
   },
   {
     "ko": "삼월",
@@ -6203,7 +6205,7 @@
   {
     "ko": "스키",
     "pos": "",
-    "zh": "",
+    "zh": "滑雪板",
     "source": "课程参考",
     "source_level": "课程-1级参考",
     "yonsei_lesson": "1册9课",
@@ -6211,7 +6213,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用木头或塑料制成的长条形工具，可以踩着在雪上滑行。",
+    "zh_source": "krdict"
   },
   {
     "ko": "요가",
@@ -6411,7 +6415,7 @@
   {
     "ko": "운동",
     "pos": "",
-    "zh": "",
+    "zh": "运动",
     "source": "课程参考",
     "source_level": "课程-1级参考",
     "yonsei_lesson": "1册9课",
@@ -6419,7 +6423,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为锻炼身体或保持健康而进行身体活动。",
+    "zh_source": "krdict"
   },
   {
     "ko": "지난",
@@ -6983,7 +6989,7 @@
   {
     "ko": "아르바이트",
     "pos": "",
-    "zh": "",
+    "zh": "打工",
     "source": "课程参考",
     "source_level": "课程-1级参考",
     "yonsei_lesson": "1册10课",
@@ -6991,7 +6997,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为赚钱而在自己的主业以外临时做的事。",
+    "zh_source": "krdict"
   },
   {
     "ko": "남자 친구",
@@ -12638,7 +12646,7 @@
   {
     "ko": "학교",
     "pos": "",
-    "zh": "",
+    "zh": "学校",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册1课",
@@ -12646,7 +12654,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "依据一定的目标、教育课程、制度等，教育学生的机构。",
+    "zh_source": "krdict"
   },
   {
     "ko": "잘생기다",
@@ -14003,7 +14013,7 @@
   {
     "ko": "슬프다",
     "pos": "",
-    "zh": "",
+    "zh": "悲伤的，伤心的",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册3课",
@@ -14011,7 +14021,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "心里痛苦难受得落泪。",
+    "zh_source": "krdict"
   },
   {
     "ko": "이사하다",
@@ -14640,7 +14652,7 @@
   {
     "ko": "샤워",
     "pos": "",
-    "zh": "",
+    "zh": "淋浴",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册4课",
@@ -14648,12 +14660,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用像下雨一样喷水的器具清洗身体。",
+    "zh_source": "krdict"
   },
   {
     "ko": "자동차",
     "pos": "",
-    "zh": "",
+    "zh": "汽车",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册4课",
@@ -14661,12 +14675,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用引擎的力量转动轮胎，在道路上行驶的车。",
+    "zh_source": "krdict"
   },
   {
     "ko": "침실",
     "pos": "",
-    "zh": "",
+    "zh": "卧室",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册4课",
@@ -14674,12 +14690,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "家里主要用于睡觉的房间。",
+    "zh_source": "krdict"
   },
   {
     "ko": "신발장",
     "pos": "",
-    "zh": "",
+    "zh": "鞋柜",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册4课",
@@ -14687,7 +14705,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "放鞋子的家具。",
+    "zh_source": "krdict"
   },
   {
     "ko": "책상 옆",
@@ -15017,7 +15037,7 @@
   {
     "ko": "치맥",
     "pos": "",
-    "zh": "",
+    "zh": "炸鸡和啤酒",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册5课",
@@ -15025,7 +15045,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "炸鸡与啤酒的组合。",
+    "zh_source": "krdict"
   },
   {
     "ko": "페스티벌",
@@ -15043,7 +15065,7 @@
   {
     "ko": "선택하다",
     "pos": "",
-    "zh": "",
+    "zh": "选，选择",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册5课",
@@ -15051,7 +15073,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "从多个中挑出需要的。",
+    "zh_source": "krdict"
   },
   {
     "ko": "메뉴",
@@ -15797,7 +15821,7 @@
   {
     "ko": "된장찌개",
     "pos": "",
-    "zh": "",
+    "zh": "韩式大酱汤",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册5课",
@@ -15805,7 +15829,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "将大酱拌入水中，并放入葱、西葫芦、豆腐等食材后煮制而成的浓汤。",
+    "zh_source": "krdict"
   },
   {
     "ko": "식료품",
@@ -16590,7 +16616,7 @@
   {
     "ko": "냉장고",
     "pos": "",
-    "zh": "",
+    "zh": "冰箱",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册6课",
@@ -16598,7 +16624,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为避免食物坏掉或为了冷却而在低温中进行保管的箱式机器。",
+    "zh_source": "krdict"
   },
   {
     "ko": "가구",
@@ -16616,7 +16644,7 @@
   {
     "ko": "축구공",
     "pos": "",
-    "zh": "",
+    "zh": "足球",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册6课",
@@ -16624,7 +16652,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用于足球运动的球。",
+    "zh_source": "krdict"
   },
   {
     "ko": "양복",
@@ -17318,7 +17348,7 @@
   {
     "ko": "검은색",
     "pos": "",
-    "zh": "",
+    "zh": "黑，黑色",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册7课",
@@ -17326,7 +17356,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "无光的夜空或墨汁一样的颜色。",
+    "zh_source": "krdict"
   },
   {
     "ko": "동아리",
@@ -17981,7 +18013,7 @@
   {
     "ko": "카드",
     "pos": "",
-    "zh": "",
+    "zh": "卡",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册8课",
@@ -17989,7 +18021,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "为了证明或记录某一内容，剪裁成一定规格、形状的厚纸片或塑料片。",
+    "zh_source": "krdict"
   },
   {
     "ko": "아/야",
@@ -21192,7 +21226,7 @@
   {
     "ko": "주소",
     "pos": "",
-    "zh": "",
+    "zh": "地址，住址",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册13课",
@@ -21200,7 +21234,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "住所、单位、机关等所处的行政区域的名称。",
+    "zh_source": "krdict"
   },
   {
     "ko": "통화하다",
@@ -23389,7 +23425,7 @@
   {
     "ko": "배구",
     "pos": "",
-    "zh": "",
+    "zh": "排球",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册17课",
@@ -23397,7 +23433,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "一种球类比赛，在长方形的球场中间隔一张网，用手把球打给对方，保持球不落地。",
+    "zh_source": "krdict"
   },
   {
     "ko": "기타",
@@ -23857,7 +23895,7 @@
   {
     "ko": "여성",
     "pos": "",
-    "zh": "",
+    "zh": "女性",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册18课",
@@ -23865,12 +23903,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "女子。特指成年女子。",
+    "zh_source": "krdict"
   },
   {
     "ko": "남성",
     "pos": "",
-    "zh": "",
+    "zh": "男性",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册18课",
@@ -23878,7 +23918,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "不能生育孩子的性别；或指该性别的成年人。",
+    "zh_source": "krdict"
   },
   {
     "ko": "어른",
@@ -24585,7 +24627,7 @@
   {
     "ko": "신혼여행",
     "pos": "",
-    "zh": "",
+    "zh": "蜜月旅行，蜜月旅游",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册19课",
@@ -24593,7 +24635,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "结婚典礼结束后成为夫妇的两人一起去的旅行。",
+    "zh_source": "krdict"
   },
   {
     "ko": "가족 여행",
@@ -24962,7 +25006,7 @@
   {
     "ko": "불국사",
     "pos": "",
-    "zh": "",
+    "zh": "佛国寺",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册20课",
@@ -24970,12 +25014,14 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "位于庆尚北道庆州市的建于新罗时期的寺院。其全称为“庆州佛国寺”。拥有代表新罗佛教艺术的珍贵遗产——多宝塔、释迦塔等。",
+    "zh_source": "krdict"
   },
   {
     "ko": "석굴암",
     "pos": "",
-    "zh": "",
+    "zh": "石窟庵",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册20课",
@@ -24983,7 +25029,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "位于庆尚北道庆州市吐含山东边，统一新罗时期建造的石窟寺院。里面有一座雕刻在白色花岗岩上的大型佛像，被誉为佛教艺术的最高杰作。",
+    "zh_source": "krdict"
   },
   {
     "ko": "방송",
@@ -25131,7 +25179,7 @@
   {
     "ko": "구름",
     "pos": "",
-    "zh": "",
+    "zh": "云，云彩",
     "source": "课程参考",
     "source_level": "课程-2级参考",
     "yonsei_lesson": "2册20课",
@@ -25139,7 +25187,9 @@
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "空气中的小水滴或冰晶聚集成白色或灰色漂浮在天空中的物体。",
+    "zh_source": "krdict"
   },
   {
     "ko": "바람이 강하다",
