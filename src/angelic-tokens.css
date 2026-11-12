@@ -1,0 +1,38 @@
+:root {
+  --ar-angel-white: #F8F8F6;
+  --ar-mist-silver-blue: #E0E8F0;
+  --ar-pearl-silver: #C4C9D4;
+  --ar-soft-pink-lilac: #E9DDE7;
+  --ar-silver-gray: #777D8A;
+
+  --ar-ink: #303c50;
+  --ar-blue-ink: #405b78;
+  --ar-button-light: #456583;
+  --ar-button-dark: #38536f;
+  /* Darken Silver Gray for small text. The exact brand shade is used for icons and outlines. */
+  --ar-muted: #5b6373;
+  --ar-lilac-wash: #f2edf0;
+  --ar-paper-surface: linear-gradient(143deg, var(--ar-angel-white) 72%, var(--ar-lilac-wash));
+  --ar-mist-surface: linear-gradient(155deg, var(--ar-mist-silver-blue), var(--ar-angel-white) 46%, var(--ar-angel-white) 76%, var(--ar-lilac-wash));
+
+  --ar-space-1: 4px;
+  --ar-space-2: 8px;
+  --ar-space-3: 12px;
+  --ar-space-4: 16px;
+  --ar-space-5: 24px;
+  --ar-space-6: 32px;
+  --ar-radius-control: 12px;
+  --ar-radius-panel: 18px;
+  --ar-target: 44px;
+  --ar-press: 120ms cubic-bezier(.2, .7, .3, 1);
+  --ar-shadow-button: 0 1px 2px rgb(48 60 80 / .14), 0 6px 14px rgb(48 60 80 / .16);
+  --ar-shadow-panel: 0 4px 14px rgb(48 60 80 / .07);
+  --ar-wing-shadow: rgb(69 101 131 / .22);
+}
+
+@supports (color: color-mix(in srgb, white, black)) {
+  :root {
+    --ar-muted: color-mix(in srgb, var(--ar-silver-gray) 60%, var(--ar-ink));
+    --ar-lilac-wash: color-mix(in srgb, var(--ar-soft-pink-lilac) 40%, var(--ar-angel-white));
+  }
+}

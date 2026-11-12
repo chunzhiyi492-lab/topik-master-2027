@@ -1,0 +1,74 @@
+{
+  "g4-2-13-01": {
+    "pattern": "-는 김에",
+    "stage": "中级",
+    "meaningZh": "接在动词后，表示借做某事的机会，顺便做另一件相关的事。",
+    "usageZh": "适合把两个能顺路完成的动作放在一起说明，例如去邮局时也寄包裹。",
+    "exampleKo": "우체국에 가는 김에 소포도 보내려고 해요.",
+    "exampleZh": "打算去邮局时顺便把包裹也寄了。",
+    "sourceUrl": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=71108&nation=eng"
+  },
+  "g5-1-07-02": {
+    "pattern": "-고자 하다",
+    "stage": "高级",
+    "meaningZh": "表示行动的目的或意图，意为‘打算……’或‘意在……’。",
+    "usageZh": "常用于报告、正式发言和书面说明。以 ‘-고자 합니다’ 交代发言目的。",
+    "exampleKo": "오늘 회의에서는 다음 달 일정을 논의하고자 합니다.",
+    "exampleZh": "今天的会议拟讨论下个月的安排。",
+    "sourceUrl": "https://krdict.korean.go.kr/vie/dicSearch/SearchView?ParaWordNo=78612&nation=vie"
+  },
+  "g5-2-20-02": {
+    "pattern": "-을뿐더러 / -ㄹ뿐더러",
+    "stage": "高级",
+    "meaningZh": "连接两个事实，表示在前一事实之外还存在另一事实，相当于‘不但……而且……’。",
+    "usageZh": "用于同时列出两个特点或理由，后项通常补充同一方向的信息。",
+    "exampleKo": "이 도서관은 조용할뿐더러 자료도 풍부해요.",
+    "exampleZh": "这座图书馆不仅安静，资料也很丰富。",
+    "sourceUrl": "https://krdict.korean.go.kr/jpn/dicSearch/SearchView?ParaWordNo=74021&nation=jpn"
+  },
+  "g6-1-03-01": {
+    "pattern": "은커녕 / 는커녕",
+    "stage": "高级",
+    "meaningZh": "接在名词后强调否定，表示‘别说……，连……都……’。",
+    "usageZh": "前项是较难达到或期待较高的事，后项说明更基本的事也做不到。",
+    "exampleKo": "점심은커녕 물 한 잔도 마시지 못했어요.",
+    "exampleZh": "别说吃午饭了，连一杯水都没能喝上。",
+    "sourceUrl": "https://krdict.korean.go.kr/jpn/dicSearch/SearchView?ParaWordNo=70316&nation=jpn"
+  },
+  "g6-1-03-02": {
+    "pattern": "조차",
+    "stage": "高级",
+    "meaningZh": "接在名词后，把出乎意料的极端情况也包含在内，相当于‘连……都……’。",
+    "usageZh": "常用于结果低于预期的场景，突出本来最有可能例外的人或事也未能例外。",
+    "exampleKo": "길을 잘 아는 친구조차 출구를 찾지 못했어요.",
+    "exampleZh": "连很熟悉路的朋友也没找到出口。",
+    "sourceUrl": "https://krdict.korean.go.kr/jpn/dicSearch/SearchView?ParaWordNo=70345&nation=jpn"
+  },
+  "g6-1-10-01": {
+    "pattern": "-은 채 / -ㄴ 채",
+    "stage": "中级",
+    "meaningZh": "表示某个状态保持不变，在该状态下发生后面的动作或事件。",
+    "usageZh": "用于说明本来可能会先改变的状态仍然保持，例如戴着眼镜就睡着了。",
+    "exampleKo": "안경을 쓴 채 잠이 들었어요.",
+    "exampleZh": "戴着眼镜就睡着了。",
+    "sourceUrl": "https://krdict.korean.go.kr/eng/dicMarinerSearch/search?mainSearchWord=%EC%B1%84"
+  },
+  "g6-1-10-02": {
+    "pattern": "-건만",
+    "stage": "高级",
+    "meaningZh": "表示后项与根据前项可以期待的结果不同，相当于‘虽然……却……’。",
+    "usageZh": "适合叙述事实与预期的反差，例如做了准备，结果还是出了问题。",
+    "exampleKo": "몇 번이나 확인했건만 같은 실수를 또 했어요.",
+    "exampleZh": "明明确认过好几次，却还是又犯了同样的错。",
+    "sourceUrl": "https://krdict.korean.go.kr/eng/dicSearch/SearchView?ParaWordNo=66934"
+  },
+  "g6-2-13-01": {
+    "pattern": "-는 탓에 / -은 탓에 / -ㄴ 탓에",
+    "stage": "中级",
+    "meaningZh": "表示前项是造成后面不理想结果的原因，相当于‘由于……而……’。",
+    "usageZh": "用于解释不便、失败或负面结果，例如因交通堵塞而迟到。",
+    "exampleKo": "길이 막히는 탓에 회의에 늦었어요.",
+    "exampleZh": "由于堵车，开会迟到了。",
+    "sourceUrl": "https://krdict.korean.go.kr/jpn/dicSearch/SearchView?ParaWordNo=72994&nation=jpn"
+  }
+}

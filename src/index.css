@@ -1,0 +1,98 @@
+@import './angelic-tokens.css';
+
+/* TOPIK MASTER 2027 — 业务页面的现有样式 */
+/* 颜色 / 字体 / 圆角 / 阴影全部集中在这里，业务逻辑与视觉样式分离。 */
+/* 旧类名（.note / .pass / .fail / button.secondary / table 等）保留， */
+/* 各功能页仍在用，只换配色，不改类名。 */
+
+:root {
+  /* 色彩 token（严格按设计方案 §3.1） */
+  --lace-pink: #f6e8f1;   /* 浅色页面背景、波点带 */
+  --ivory: #f7f2ec;       /* 内容区域底 */
+  --vintage-rose: #c99aaf;/* 核心强调色：数字、进度条、图标描边、2027 */
+  --dusty-pink: #e8c5d8;  /* 装饰区域、进度条底、虚线框 */
+  --forest: #202820;      /* 暗调主视觉、主标题、主按钮底 */
+  --moss: #78866b;        /* 植物元素、四叶草叶 */
+  --sage: #a5aa94;        /* 次要点缀、勾选态、叶脉 */
+  --pearl: #ede5e9;       /* 边框、分隔线、闪点 */
+  --plum: #554052;        /* 少量文字装饰：副标题、日期、时间 */
+  --card: #fffdf9;        /* 卡片底（比页面底略亮半档） */
+  --ink: #2e2a28;         /* 正文文字 */
+  /* 字体 token（设计方案 §3.2，三套家族） */
+  --font-en: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-zh-title: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  /* 圆角 / 阴影 token */
+  --radius-card: 14px;
+  --radius-btn: 10px;
+  --shadow-card: 0 10px 30px rgba(32, 40, 32, 0.08);
+
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--ivory);
+  line-height: 1.6;
+}
+body { margin: 0; }
+.app-content { max-width: 720px; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px 64px; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+h2 { font-size: 20px; margin: 28px 0 8px; }
+p { margin: 8px 0; }
+button {
+  font: inherit; padding: 10px 18px; border: 1px solid var(--forest);
+  border-radius: var(--radius-btn); background: var(--forest); color: var(--ivory); cursor: pointer;
+}
+button.secondary { background: #fff; color: var(--ink); border-color: #ccc; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }
+th { background: var(--lace-pink); }
+code { background: var(--pearl); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+.pass { color: #1a7f37; font-weight: 700; }
+.fail { color: #cf222e; font-weight: 700; }
+.unchecked { color: #8250df; font-weight: 700; }
+.note {
+  background: var(--card); border: 1px solid var(--pearl);
+  border-radius: var(--radius-card); padding: 12px; font-size: 14px;
+}
+input, select, textarea { font: inherit; }
+.study-calendar { table-layout: fixed; }
+.study-calendar th, .study-calendar td { padding: 2px; text-align: center; }
+.study-calendar button { width: 100%; min-height: 44px; padding: 2px; }
+.study-calendar button[aria-current="date"] { border-color: var(--moss); }
+.study-calendar button[aria-pressed="true"] { background: var(--forest); color: var(--ivory); }
+.study-activity-list { overflow-wrap: anywhere; }
+
+/* ---------- 语法页 Grammar ---------- */
+.grammar-search { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.grammar-search input[type="search"] {
+  flex: 1; min-width: 180px; padding: 8px 10px;
+  border: 1px solid var(--pearl); border-radius: var(--radius-btn); background: #fff;
+}
+.grammar-search select {
+  padding: 8px 10px; border: 1px solid var(--pearl);
+  border-radius: var(--radius-btn); background: #fff;
+}
+.grammar-count { font-size: 13px; color: var(--plum); }
+.grammar-item {
+  background: var(--card); border: 1px solid var(--pearl);
+  border-radius: var(--radius-card); padding: 10px 12px; margin: 8px 0;
+}
+.grammar-item summary { cursor: pointer; font-size: 16px; }
+.grammar-pattern { font-weight: 700; color: var(--forest); }
+.grammar-book { font-size: 12px; color: var(--plum); margin-left: 8px; }
+.grammar-meaning { margin: 6px 0 0; font-size: 14px; }
+.grammar-pending { color: var(--vintage-rose); }
+.grammar-example { margin: 6px 0 0; font-size: 14px; }
+.grammar-example li { margin: 2px 0; }
+.grammar-note { margin: 6px 0 0; font-size: 13px; color: var(--plum); }
+
+.reading-text { max-width: 48rem; font-size: 1.05rem; line-height: 1.85; word-break: keep-all; overflow-wrap: anywhere; }
+.reading-text p { margin-block: 1rem; scroll-margin-top: 1rem; }
+.reading-question { min-width: 0; margin: 1rem 0; overflow-wrap: anywhere; }
+.reading-question legend { max-width: 100%; font-weight: 600; word-break: keep-all; }
+.reading-question label { display: flex; align-items: baseline; gap: .5rem; min-height: 44px; padding-block: .35rem; }
+.reading-question label span { min-width: 0; word-break: keep-all; overflow-wrap: anywhere; }
+
+/* ---------- 动效（轻量；减弱动效偏好时停用） ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
