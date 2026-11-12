@@ -13,7 +13,7 @@ export const RESOURCE_LIMITS = { title: 120, url: 2048, note: 5000 } as const
 
 export const PUBLIC_RESOURCE_LINKS = [
   { title: 'TOPIK 官网', url: 'https://www.topik.go.kr/', description: '考试信息与学习资料入口' },
-  { title: '韩国国立国语院基础韩语词典', url: 'https://krdict.korean.go.kr/', description: '查词与例句，提供中韩词典入口' },
+  { title: '韩国国立国语院基础韩语词典', url: 'https://krdict.korean.go.kr/', description: '查词与例句，提供中韩词典入口；本应用部分中文释义取自该词典（CC BY-SA 2.0 KR）' },
   { title: 'Nuri 世宗学堂', url: 'https://nuri.iksi.or.kr/', description: '韩语学习资料' },
 ]
 
