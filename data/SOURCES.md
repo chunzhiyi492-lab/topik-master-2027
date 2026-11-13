@@ -6,3 +6,4 @@
 - 商业教材语法与词汇种子、课名模板、真题附件和听力音频均未进入本包或构建。公开版教材进度使用编号，用户自行导入的学习资料仅在当前浏览器存储。
 - 中文释义批量补入（2026-11-12）：`vocab-seed.json` 中缺中文释义的词条经国立国语院《한국어기초사전》API（krdict.korean.go.kr，trans_lang=11）逐条查询补入：取第一义中文译词为 `zh`、中文释义句为 `zh_dfn`，字段 `zh_source` 标 krdict，状态改“待核实”。同音异义词按词性匹配、查无者留空待补，未用机器翻译。中文释义来源：국립국어원 한국어기초사전（CC BY-SA 2.0 KR）。
 
+- 못04 的中文释义“不能”来自 Korean Wiktionary（ko.wiktionary.org/wiki/못），CC BY-SA 许可，署名 Korean Wiktionary contributors。

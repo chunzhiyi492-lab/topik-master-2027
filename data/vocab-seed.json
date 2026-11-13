@@ -966,15 +966,17 @@
   {
     "ko": "싶다",
     "pos": "보조 용언",
-    "zh": "",
+    "zh": "要，想",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "表示有做前面内容的意图或欲望。",
+    "zh_source": "krdict"
   },
   {
     "ko": "가지다",
@@ -2112,15 +2114,17 @@
   {
     "ko": "못04",
     "pos": "부사",
-    "zh": "",
+    "zh": "不能",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "",
+    "zh_source": "wiktionary-ko"
   },
   {
     "ko": "역사04",
