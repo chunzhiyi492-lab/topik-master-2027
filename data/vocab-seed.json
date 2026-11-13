@@ -436,15 +436,17 @@
   {
     "ko": "일07",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "日",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算日或日子的单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "많다",
@@ -758,15 +760,17 @@
   {
     "ko": "원01",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "韩元，韩币",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "韩国货币单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "생각01",
@@ -801,15 +805,17 @@
   {
     "ko": "명03",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "个，名",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算人数的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "다시01",
@@ -874,15 +880,17 @@
   {
     "ko": "개10",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "个",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算单个东西的计量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "뒤01",
@@ -1293,15 +1301,17 @@
   {
     "ko": "퍼센트",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "百分之……",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "把整体平均分为100份，以此表示某些数量在其中所占的比例单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "학교",
@@ -1439,15 +1449,17 @@
   {
     "ko": "번04",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "个",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "表示事情的次序。",
+    "zh_source": "krdict"
   },
   {
     "ko": "그거",
@@ -1965,15 +1977,17 @@
   {
     "ko": "시10",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "点，点钟",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计时单位，表示一天二十四小时中的某一个。",
+    "zh_source": "krdict"
   },
   {
     "ko": "나가다",
@@ -4339,15 +4353,17 @@
   {
     "ko": "살04",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "岁",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算年龄的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "음악01",
@@ -4601,15 +4617,17 @@
   {
     "ko": "달05",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "月",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "将一年分为十二份，数其中一个时间段的单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "참01",
@@ -5356,15 +5374,17 @@
   {
     "ko": "달러",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "美元",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "美国的货币单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "사랑하다",
@@ -5474,15 +5494,17 @@
   {
     "ko": "개월",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "个月",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "数月份的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "어린이01",
@@ -5635,15 +5657,17 @@
   {
     "ko": "미터02",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "米",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "长度单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "어떠하다",
@@ -5706,15 +5730,17 @@
   {
     "ko": "술06",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "勺 ，勺儿 ，羹匙",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "用调羹舀取米饭等食物的计量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "짧다",
@@ -5942,15 +5968,17 @@
   {
     "ko": "장22",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "张，枚，纸",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算纸张、照片等薄而宽的东西的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "식사03",
@@ -6073,15 +6101,17 @@
   {
     "ko": "센티미터",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "厘米，公分",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "长度单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "팔01",
@@ -6837,15 +6867,17 @@
   {
     "ko": "마리01",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "只，头，条",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算飞禽走兽或鱼虫等的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "비행기",
@@ -8211,15 +8243,17 @@
   {
     "ko": "권01",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "本",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算书或本子的数量单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "시계01",
@@ -11781,15 +11815,17 @@
   {
     "ko": "월02",
     "pos": "의존명사",
-    "zh": "",
+    "zh": "月",
     "source": "NIKL",
     "source_level": "NIKL-A",
     "yonsei_lesson": "",
-    "status": "已核实",
+    "status": "待核实",
     "example_ko": "",
     "example_zh": "",
     "favorite": false,
-    "isTestData": false
+    "isTestData": false,
+    "zh_dfn": "计算月份的单位。",
+    "zh_source": "krdict"
   },
   {
     "ko": "잡수시다",
